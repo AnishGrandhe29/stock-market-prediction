@@ -1,0 +1,13 @@
+pandas
+numpy
+torch
+transformers
+scikit-learn
+ta
+yfinance
+pandas_datareader
+fastapi
+uvicorn
+streamlit
+matplotlib
+tqdm

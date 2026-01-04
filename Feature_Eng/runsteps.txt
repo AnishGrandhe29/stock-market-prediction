@@ -1,0 +1,104 @@
+Here is the step-by-step guide on how to create and enter (activate) a Python virtual environment for your project.
+
+Step 1: Open your Terminal or Command Prompt
+
+Navigate to the folder where your project is located using the cd command.
+
+code
+Bash
+download
+content_copy
+expand_less
+cd path/to/your/project
+Step 2: Create the Virtual Environment (One-time setup)
+
+If you haven't created one yet, run this command. It creates a folder (usually named venv or .venv) inside your project.
+
+Windows:
+
+code
+Bash
+download
+content_copy
+expand_less
+python -m venv venv
+
+macOS / Linux:
+
+code
+Bash
+download
+content_copy
+expand_less
+python3 -m venv venv
+Step 3: Enter (Activate) the Virtual Environment
+
+This is the specific step you asked for. The command depends on your operating system.
+
+On Windows
+
+If you are using Command Prompt (cmd):
+
+code
+Cmd
+download
+content_copy
+expand_less
+venv\Scripts\activate
+
+If you are using PowerShell:
+
+code
+Powershell
+download
+content_copy
+expand_less
+.\venv\Scripts\Activate.ps1
+
+(Note: If you get a permission error in PowerShell, run Set-ExecutionPolicy Unrestricted -Scope Process first, then try activating again.)
+
+On macOS or Linux
+code
+Bash
+download
+content_copy
+expand_less
+source venv/bin/activate
+Step 4: How to know you are "In"
+
+Once you press enter, look at your command line prompt. You should see the name of your environment in parentheses at the start of the line, like this:
+
+code
+Text
+download
+content_copy
+expand_less
+(venv) C:\Users\YourName\Project>
+
+or
+
+code
+Text
+download
+content_copy
+expand_less
+(venv) user@macbook project %
+Step 5: How to Leave (Deactivate)
+
+When you are done working and want to return to your global Python system, simply type:
+
+code
+Bash
+download
+content_copy
+expand_less
+deactivate
+Summary Checklist
+
+Create: python -m venv venv
+
+Activate (Win): venv\Scripts\activate
+
+Activate (Mac/Lin): source venv/bin/activate
+
+Install packages: pip install package_name (only works while activated!)
