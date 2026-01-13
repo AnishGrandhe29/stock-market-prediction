@@ -1,0 +1,218 @@
+Slide 1:
+Title: Enhancing Stock Market Prediction Using Multimodal Deep Learning and Explainable AI
+
+Internal Guide : Ms. Soume Sanyal
+Team No: C14
+Students: Anish Grandhe – 1602-22-737-133
+                     Karthik Peetela – 1602-22-737-317
+
+Slide 2:
+Title: Problem Statement
+
+Predicting the stock market is one of the most demanding tasks in financial analytics due to the constant fluctuations and influence of a wide variety of factors. Standard models struggle to make sense of diverse data like prices, trading volumes, and external news events, which all interact to affect asset values.
+Furthermore, existing approaches are often opaque, unable to show why a particular prediction was made or how the system responded to new information. This lack of clarity and adaptability makes it difficult for investors and regulators to trust or audit these models.
+
+
+Slide 3:
+Title:  Motivation 
+
+A truly effective prediction system could help investors anticipate major market moves, minimize risks, and respond more intelligently to ongoing changes. Such a tool would transform strategy and decision-making at all levels, from individual traders to regulatory authorities.
+Despite powerful advances in artificial intelligence, there is still no widely deployed solution that can blend heterogeneous data sources, adapt to new markets, and produce transparent forecasts. Solving these challenges would mean a major leap forward for both financial research and real-world investment practice.
+
+
+Slide 4:
+Title: Literature Survey 
+
+
+Slide 5:
+Title: Justification and Significance
+
+The proposed research is justified by the persistent limitations in existing stock market prediction models, which often fail to integrate the varied influences of market data and external information such as news sentiment. By developing a framework that can systematically fuse heterogeneous data streams, this work addresses a core gap in financial machine learning and sets the foundation for more accurate and context-aware predictions.​
+Significantly, the model advances the field by prioritizing interpretability and transparency, making each prediction explainable and accountable—qualities crucial for investor trust and regulatory compliance. Its enhanced ability to generalize across different markets and adapt to new situations ensures practical value in real-world trading environments. By establishing rigorous benchmarking and open evalution practices, this work aims to set new standards for fairness, reproducibility, and ethical deployment in financial AI.
+
+
+Slide 6:
+Title: Research Gaps Stock Market
+
+Despite advances in deep learning, key gaps remain. Current models lack effective integration of heterogeneous data, limiting their predictive power. Many operate as black boxes with poor interpretability. They often fail to generalize across different markets or adapt to new financial environments. Ethical considerations and benchmarking standards are seldom addressed, restricting real-world trust and adoption.
+Addressing these gaps is vital for progressing from theoretical models to practical, transparent, and reliable stock market forecasting tools.
+
+
+Slide 7:
+Title: Outline of Proposed Solution 
+
+Objective 1: Design a multimodal data integration pipeline that collects, preprocesses, and fuses stock prices, technical indicators, and news sentiment, enabling comprehensive feature extraction for robust prediction.
+Objective 2: Develop a hybrid neural network model—combining CNN, BiLSTM, and attention layers—that adaptively captures short-term and long-term market trends, learns from diverse data, and produces transparent, interpretable predictions.
+Objective 3: Implement built-in benchmarking, explainability, and compliance modules to assess model performance across multiple markets while supporting fairness audits and regulatory reporting.
+
+
+Slide 8:
+Title: Dataset Plan
+
+Historical stock data and technical indicators will be sourced from public APIs (such as Yahoo Finance and Alpha Vantage) for leading indices and major stocks. News sentiment data will be accessed using free or academic-access news APIs.
+The plan is to synchronize all datasets by trading date, preprocess them for missing values and outliers, and merge into a unified format suitable for time-series analysis and model training. This approach ensures diverse, high-quality data for robust model development and evaluation.
+
+
+Slide 9:
+Title: Implementation Tools
+
+
+Slide 10:
+Title: Architecture Diagram
+
+
+Slide 11:
+Title: THANK YOU
+
+
+==================================================
+
+Slide 1:
+Title: PROJECT SEMINAR ON
+
+Slide 2:
+Title: Abstract
+A novel multimodal Temporal Convolutional Network is introduced for NIFTY 50 trading, integrating price data, technical indicators, news, social media sentiment, ESG factors, and macroeconomic variables. It combines sentiment analysis with numerical features and uses an adaptive fusion gate to weight each data source. The dual-output design predicts prices and evaluates risk through measures like volatility and Sharpe ratio, while its continuous learning setup adapts to changing market conditions to deliver risk-adjusted position sizing and actionable trading signals
+
+Slide 3:
+Title: Motivation
+
+Slide 4:
+Title: Problem Statement
+
+Slide 5:
+Title: Literature Survey
+
+Slide 6:
+Title: Existing Models 
+
+
+
+Slide 7:
+Title: Existing Models 
+
+
+
+Slide 8:
+Title: Proposed Model
+
+
+Multi-Source Data Integration:Combines six heterogeneous inputs—price history, technical indicators, news, social media sentiment, ESG metrics, and macroeconomic indicators—into a unified feature pipeline.
+
+Specialized Encoding Branches:Price data, textual data (via DistilBERT), and ESG/macro factors are encoded through dedicated TCN, transformer, and MLP branches to produce rich latent embeddings.
+
+Adaptive Fusion & Prediction:An adaptive fusion gate dynamically weights each modality based on market conditions, followed by a fusion head that generates calibrated price predictions, quantiles, and uncertainty scores.
+
+Risk-Aware Execution Pipeline:Outputs feed into risk mapping and position sizing modules, enabling controlled trade decisions, paper-trading execution, and real-time monitoring via dashboard.
+
+Slide 9:
+Title: Architecture Diagram
+
+
+Slide 10:
+Title: Dataset 
+
+
+Historical market data: OHLVC time series for all NIFTY 50 constituents from past to present, used as the primary numerical input for price modeling.
+
+Stock-level sentiment: Centered, stock-specific sentiment vectors derived from news and social media to train the textual encoder and capture investor mood.
+
+Technical features: TA-Lib computed indicators (RSI, MACD, EMA, ATR, etc.) added to the feature set and aligned with price and sentiment timestamps for model training.
+
+Slide 11:
+Title: Plan of Implementation
+
+
+Slide 12:
+Title: Conclusion
+
+
+First multimodal TCN for Indian markets integrating 6 data sources, delivering MAE 1.23 vs. 1.45 LSTM with dual price + risk outputs.
+
+Adaptive fusion gate, continuous learning, and strong risk modeling enable stable performance under dynamic market conditions.
+
+Provides institutional-grade analytics to retail users, faster reaction to news/sentiment, explainable forecasts, and robust capital protection.
+
+Scalable to global markets and future-ready with extensions like reinforcement learning, alternative data integration, derivatives modeling, and multi-asset optimization.
+
+Slide 13:
+Title: References
+
+
+
+[1] Biswas, A.K., et al. (2025). "A Dual Output Temporal Convolutional Network with Attention Architecture for Stock Price Prediction and Risk Assessment." IEEE Access, Vol. 13, pp. 53621-53639. 
+[2] Shi, Z., Ibrahim, O., & Hashim, H.I.C. (2025). "Stock Index Prediction Using Temporal Convolutional Network and Long Short-Term Memory Network Optimized by Genetic Algorithm." JoWUA, Vol. 16(1), pp. 508-527.
+[3] Wang, X., Wang, Y., Weng, B., & Vinel, A. (2020). "Stock2Vec: A Hybrid Deep Learning Framework for Stock Market Prediction with Representation Learning and Temporal Convolutional Network." arXiv:2010.01197. 
+ [4] Deng, S., Zhang, N., Zhang, W., Chen, J., Pan, J.Z., & Chen, H. (2019). "Knowledge-Driven Stock Trend Prediction and Explanation via Temporal Convolutional Network." WWW '19 Companion, pp. 678-685.
+
+==================================================
+
+Slide 1:
+Title: Enhancing Stock Market Prediction Using Multimodal Deep Learning and Explainable AI
+
+Internal Guide : Ms. Soume Sanyal
+Team No: C14
+Students: Anish Grandhe – 1602-22-737-133
+                     Karthik Peetela – 1602-22-737-317
+
+Slide 2:
+Title: Problem Statement
+
+Predicting the stock market is one of the most demanding tasks in financial analytics due to the constant fluctuations and influence of a wide variety of factors. Standard models struggle to make sense of diverse data like prices, trading volumes, and external news events, which all interact to affect asset values.
+Furthermore, existing approaches are often opaque, unable to show why a particular prediction was made or how the system responded to new information. This lack of clarity and adaptability makes it difficult for investors and regulators to trust or audit these models.
+
+
+Slide 3:
+Title:  Motivation 
+
+A truly effective prediction system could help investors anticipate major market moves, minimize risks, and respond more intelligently to ongoing changes. Such a tool would transform strategy and decision-making at all levels, from individual traders to regulatory authorities.
+Despite powerful advances in artificial intelligence, there is still no widely deployed solution that can blend heterogeneous data sources, adapt to new markets, and produce transparent forecasts. Solving these challenges would mean a major leap forward for both financial research and real-world investment practice.
+
+
+Slide 4:
+Title: Literature Survey 
+
+
+Slide 5:
+Title: Justification and Significance
+
+The proposed research is justified by the persistent limitations in existing stock market prediction models, which often fail to integrate the varied influences of market data and external information such as news sentiment. By developing a framework that can systematically fuse heterogeneous data streams, this work addresses a core gap in financial machine learning and sets the foundation for more accurate and context-aware predictions.​
+Significantly, the model advances the field by prioritizing interpretability and transparency, making each prediction explainable and accountable—qualities crucial for investor trust and regulatory compliance. Its enhanced ability to generalize across different markets and adapt to new situations ensures practical value in real-world trading environments. By establishing rigorous benchmarking and open evalution practices, this work aims to set new standards for fairness, reproducibility, and ethical deployment in financial AI.
+
+
+Slide 6:
+Title: Research Gaps Stock Market
+
+Despite advances in deep learning, key gaps remain. Current models lack effective integration of heterogeneous data, limiting their predictive power. Many operate as black boxes with poor interpretability. They often fail to generalize across different markets or adapt to new financial environments. Ethical considerations and benchmarking standards are seldom addressed, restricting real-world trust and adoption.
+Addressing these gaps is vital for progressing from theoretical models to practical, transparent, and reliable stock market forecasting tools.
+
+
+Slide 7:
+Title: Outline of Proposed Solution 
+
+Objective 1: Design a multimodal data integration pipeline that collects, preprocesses, and fuses stock prices, technical indicators, and news sentiment, enabling comprehensive feature extraction for robust prediction.
+Objective 2: Develop a hybrid neural network model—combining CNN, BiLSTM, and attention layers—that adaptively captures short-term and long-term market trends, learns from diverse data, and produces transparent, interpretable predictions.
+Objective 3: Implement built-in benchmarking, explainability, and compliance modules to assess model performance across multiple markets while supporting fairness audits and regulatory reporting.
+
+
+Slide 8:
+Title: Dataset Plan
+
+Historical stock data and technical indicators will be sourced from public APIs (such as Yahoo Finance and Alpha Vantage) for leading indices and major stocks. News sentiment data will be accessed using free or academic-access news APIs.
+The plan is to synchronize all datasets by trading date, preprocess them for missing values and outliers, and merge into a unified format suitable for time-series analysis and model training. This approach ensures diverse, high-quality data for robust model development and evaluation.
+
+
+Slide 9:
+Title: Implementation Tools
+
+
+Slide 10:
+Title: Architecture Diagram
+
+
+Slide 11:
+Title: THANK YOU
+
+
+==================================================
+
