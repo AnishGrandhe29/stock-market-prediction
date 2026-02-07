@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 23, 23, 23;
+  --background-rgb: 255, 255, 255;
+}
+
+.dark {
+  --foreground-rgb: 250, 250, 250;
+  --background-rgb: 9, 9, 11;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6366f1;
+  border-radius: 4px;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Card styles */
+.card {
+  @apply bg-white dark:bg-surface-800 rounded-xl shadow-lg border border-surface-200 dark:border-surface-700;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-xl hover:scale-[1.02];
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
+}
+
+/* Positive/Negative indicators */
+.positive {
+  @apply text-success-500;
+}
+
+.negative {
+  @apply text-danger-500;
+}
+
+/* Pulse animation for live indicator */
+.live-indicator {
+  @apply relative;
+}
+
+.live-indicator::before {
+  content: '';
+  @apply absolute w-2 h-2 bg-success-500 rounded-full animate-ping;
+}
+
+.live-indicator::after {
+  content: '';
+  @apply absolute w-2 h-2 bg-success-500 rounded-full;
+}
+
+/* Chart container */
+.chart-container {
+  @apply w-full h-[400px] rounded-lg overflow-hidden;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-surface-200 dark:bg-surface-700 rounded;
+}
+
+/* Info tooltip trigger */
+.info-trigger {
+  @apply inline-flex items-center justify-center w-5 h-5 rounded-full 
+         bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400
+         cursor-help transition-all hover:bg-primary-200 dark:hover:bg-primary-800;
+}
