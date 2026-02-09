@@ -20,7 +20,7 @@ class Prediction(Base):
     target_date = Column(Date, index=True, nullable=False)  # Date being predicted
     
     # Predictions
-    predicted_close = Column(Float, nullable=False)
+    predicted_open = Column(Float, nullable=False)
     predicted_change_pct = Column(Float, nullable=False)  # % change from current
     
     # Quantiles for uncertainty
@@ -54,7 +54,7 @@ class Prediction(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f"<Prediction {self.target_date} -> {self.predicted_close}>"
+        return f"<Prediction {self.target_date} -> {self.predicted_open}>"
 
 
 class PredictionAccuracy(Base):

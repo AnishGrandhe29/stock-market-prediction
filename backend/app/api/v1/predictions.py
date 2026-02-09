@@ -116,7 +116,7 @@ async def get_xai_explanation(
     return {
         "prediction_id": prediction.id,
         "target_date": prediction.target_date,
-        "predicted_value": prediction.predicted_close,
+        "predicted_value": prediction.predicted_open,
         "shap_values": prediction.shap_values or {},
         "modality_weights": prediction.modality_weights or {
             "price": 0.45,

@@ -1,14 +1,15 @@
 {
   "name": "NIFTY50Predictor",
   "version": "1.0.0",
-  "trained_on": "2026-02-05 17:19:17",
-  "test_accuracy": "57.43%",
-  "test_mae": "0.0058",
-  "test_r2": "0.0024",
+  "trained_on": "2026-02-09 11:48:21",
+  "prediction_target": "Next Day Open Price Return",
+  "test_accuracy": "68.77%",
+  "test_mae": "0.2857",
+  "test_r2": "0.1269",
   "architecture": {
     "price_encoder": "TCN (6 blocks, dilations 1-32)",
     "sentiment_encoder": "MLP (3 \u2192 64 \u2192 128)",
-    "technical_encoder": "MLP (15 \u2192 64 \u2192 128)",
+    "technical_encoder": "MLP (6 \u2192 64 \u2192 128)",
     "fusion": "Adaptive Gate (3 modalities)",
     "prediction_head": "MLP with quantile outputs"
   },
@@ -21,7 +22,7 @@
       3
     ],
     "technical": [
-      15
+      6
     ]
   },
   "parameters": 374856

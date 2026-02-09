@@ -15,7 +15,7 @@ import {
 import { stocksAPI, predictionsAPI } from '@/lib/api';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import { PredictionCard } from '@/components/dashboard/PredictionCard';
-import { PriceChart } from '@/components/charts/PriceChart';
+import { SimplePriceChart } from '@/components/charts/SimplePriceChart';
 import { ModalityWeights } from '@/components/xai/ModalityWeights';
 import { TopFeatures } from '@/components/xai/TopFeatures';
 
@@ -195,7 +195,7 @@ export default function Dashboard() {
                             content="Real-time candlestick chart showing NIFTY 50 price movements. Green candles indicate price increase, red indicates decrease."
                         />
                     </div>
-                    < PriceChart />
+                    <SimplePriceChart />
                 </div>
 
                 {/* Prediction Card */}

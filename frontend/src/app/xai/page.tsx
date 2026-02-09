@@ -32,19 +32,24 @@ export default function XAIPage() {
     const prediction = predictionData?.data;
     const currentPrice = priceData?.data?.price;
 
-    // Calculate actual direction by comparing predicted_close to current price
-    const predictedClose = prediction?.predicted_close ?? 0;
+    // Calculate actual direction by comparing predicted_open to current price
+    const predictedOpen = prediction?.predicted_open ?? 0;
     const actualChangePct = currentPrice && currentPrice > 0
-        ? ((predictedClose - currentPrice) / currentPrice) * 100
+        ? ((predictedOpen - currentPrice) / currentPrice) * 100
         : (prediction?.predicted_change_pct ?? 0);
     const isActuallyUp = actualChangePct >= 0;
 
-    // Default explanation text
+    // Generate dynamic explanation text based on actual prediction
+    const changePctAbs = Math.abs(actualChangePct).toFixed(2);
+    const directionWord = isActuallyUp ? 'increase' : 'decrease';
+    const sentimentWord = isActuallyUp ? 'positive' : 'cautious';
+    const momentumWord = isActuallyUp ? 'bullish' : 'bearish';
+
     const explanationText = prediction?.explanation_text ||
-        "The model predicts NIFTY 50 will increase by approximately 0.30% with medium confidence. " +
-        "Technical indicators show bullish momentum with RSI in neutral territory. " +
-        "News sentiment is mildly positive, contributing to the upward prediction. " +
-        "The price modality had the strongest influence on this prediction.";
+        `The model predicts NIFTY 50 will ${directionWord} by approximately ${changePctAbs}% with medium confidence. ` +
+        `Technical indicators show ${momentumWord} momentum with RSI in neutral territory. ` +
+        `News sentiment is mildly ${sentimentWord}, contributing to the ${isActuallyUp ? 'upward' : 'downward'} prediction. ` +
+        `The model analyzed price history, sentiment, and technical indicators to make this prediction.`;
 
     return (
         <div className="space-y-6">
@@ -155,7 +160,7 @@ export default function XAIPage() {
 
                     {/* Explanation Text */}
                     <div className="prose dark:prose-invert max-w-none">
-                        <p className="text-surface-700 dark:text-surface-300 leading-relaxed">
+                        <p className="text-surface-900 dark:text-white leading-relaxed">
                             {explanationText}
                         </p>
                     </div>

@@ -95,7 +95,7 @@ async def daily_prediction_generation_job():
             
             if prediction:
                 print(f"✅ Daily prediction generated:")
-                print(f"   Predicted Close: ₹{prediction.predicted_close:,.2f}")
+                print(f"   Predicted Open: ₹{prediction.predicted_open:,.2f}")
                 print(f"   Direction: {prediction.predicted_direction}")
                 print(f"   Confidence: {prediction.confidence_level}")
             else:

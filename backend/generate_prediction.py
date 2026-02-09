@@ -38,7 +38,7 @@ async def main():
             print("=" * 60)
             print(f"Symbol:           {prediction.symbol}")
             print(f"Target Date:      {prediction.target_date}")
-            print(f"Predicted Close:  ₹{prediction.predicted_close:,.2f}")
+            print(f"Predicted Open:   ₹{prediction.predicted_open:,.2f}")
             print(f"Change:           {prediction.predicted_change_pct:+.2f}%")
             print(f"Direction:        {prediction.predicted_direction.upper()}")
             print(f"Confidence:       {prediction.confidence_level.upper()}")

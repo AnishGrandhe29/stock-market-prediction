@@ -115,7 +115,7 @@ class PredictionResponse(BaseModel):
     symbol: str
     prediction_date: date
     target_date: date
-    predicted_close: float
+    predicted_open: float
     predicted_change_pct: float
     quantile_5: Optional[float]
     quantile_50: Optional[float]

@@ -42,37 +42,37 @@ export function ModalityWeights({ weights }: ModalityWeightsProps) {
     ];
 
     return (
-        <div className= "space-y-4" >
-        {
-            modalities.map((modality) => {
-                const weight = data[modality.key as keyof typeof data];
-                const percentage = (weight * 100).toFixed(0);
+        <div className="space-y-4" >
+            {
+                modalities.map((modality) => {
+                    const weight = data[modality.key as keyof typeof data];
+                    const percentage = (weight * 100).toFixed(0);
 
-                return (
-                    <div key= { modality.key } className = "space-y-2" >
-                        <div className="flex items-center justify-between" >
-                            <div className="flex items-center gap-2" >
-                                <modality.icon className="w-4 h-4 text-surface-500" />
-                                    <span className="text-sm font-medium text-surface-700 dark:text-surface-300" >
-                                        { modality.name }
-                                        </span>
-                                        </div>
-                                        < span className = "text-sm font-bold text-surface-900 dark:text-white" >
-                                            { percentage } %
-                                            </span>
-                                            </div>
-                                            < div className = "h-2 bg-surface-100 dark:bg-surface-700 rounded-full overflow-hidden" >
-                                                <div
-                className={ `h-full bg-gradient-to-r ${modality.color} rounded-full transition-all duration-500` }
-                style = {{ width: `${percentage}%` }
+                    return (
+                        <div key={modality.key} className="space-y-2" >
+                            <div className="flex items-center justify-between" >
+                                <div className="flex items-center gap-2" >
+                                    <modality.icon className="w-4 h-4 text-surface-700 dark:text-surface-300" />
+                                    <span className="text-sm font-medium text-surface-900 dark:text-white" >
+                                        {modality.name}
+                                    </span>
+                                </div>
+                                < span className="text-sm font-bold text-surface-900 dark:text-white" >
+                                    {percentage} %
+                                </span>
+                            </div>
+                            < div className="h-2 bg-surface-100 dark:bg-surface-700 rounded-full overflow-hidden" >
+                                <div
+                                    className={`h-full bg-gradient-to-r ${modality.color} rounded-full transition-all duration-500`}
+                                    style={{ width: `${percentage}%` }
+                                    }
+                                />
+                            </div>
+                            <p className="text-xs text-surface-700 dark:text-surface-300" > {modality.description} </p>
+                        </div>
+                    );
+                })
             }
-              />
-                </div>
-                < p className = "text-xs text-surface-500" > { modality.description } </p>
-                </div>
-            );
-        })
-}
-</div>
-  );
+        </div>
+    );
 }

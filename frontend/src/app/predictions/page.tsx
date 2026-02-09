@@ -45,10 +45,10 @@ export default function PredictionsPage() {
     const accuracyData = accuracy?.data;
     const currentPrice = priceData?.data?.price;
 
-    // Calculate actual direction by comparing predicted_close to current price
-    const predictedClose = prediction?.predicted_close ?? 0;
+    // Calculate actual direction by comparing predicted_open to current price
+    const predictedOpen = prediction?.predicted_open ?? 0;
     const actualChangePct = currentPrice && currentPrice > 0
-        ? ((predictedClose - currentPrice) / currentPrice) * 100
+        ? ((predictedOpen - currentPrice) / currentPrice) * 100
         : (prediction?.predicted_change_pct ?? 0);
     const isActuallyUp = actualChangePct >= 0;
 

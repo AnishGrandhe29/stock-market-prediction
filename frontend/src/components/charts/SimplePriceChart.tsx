@@ -5,34 +5,22 @@ import { useQuery } from '@tanstack/react-query';
 import { createChart, ColorType, IChartApi } from 'lightweight-charts';
 import { stocksAPI } from '@/lib/api';
 
-// Calculate Simple Moving Average
-function calculateSMA(data: number[], period: number): (number | null)[] {
-    const sma: (number | null)[] = [];
-    for (let i = 0; i < data.length; i++) {
-        if (i < period - 1) {
-            sma.push(null);
-        } else {
-            const sum = data.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
-            sma.push(sum / period);
-        }
-    }
-    return sma;
-}
-
-export function PriceChart() {
+/**
+ * Simple candlestick chart without moving averages.
+ * Used on the dashboard for a cleaner view.
+ */
+export function SimplePriceChart() {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
 
-    // Fetch 150 days to properly calculate 100-day MA
     const { data: historyData } = useQuery({
-        queryKey: ['price-history-extended'],
-        queryFn: () => stocksAPI.getHistory('^NSEI', 150),
+        queryKey: ['price-history'],
+        queryFn: () => stocksAPI.getHistory('^NSEI', 60),
     });
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
-        // Create chart
         const chart = createChart(chartContainerRef.current, {
             layout: {
                 background: { type: ColorType.Solid, color: 'transparent' },
@@ -44,26 +32,16 @@ export function PriceChart() {
             },
             width: chartContainerRef.current.clientWidth,
             height: 350,
-            rightPriceScale: {
-                borderVisible: false,
-            },
-            timeScale: {
-                borderVisible: false,
-                timeVisible: true,
-            },
+            rightPriceScale: { borderVisible: false },
+            timeScale: { borderVisible: false, timeVisible: true },
             crosshair: {
-                vertLine: {
-                    labelBackgroundColor: '#6366f1',
-                },
-                horzLine: {
-                    labelBackgroundColor: '#6366f1',
-                },
+                vertLine: { labelBackgroundColor: '#6366f1' },
+                horzLine: { labelBackgroundColor: '#6366f1' },
             },
         });
 
         chartRef.current = chart;
 
-        // Add candlestick series
         const candlestickSeries = chart.addCandlestickSeries({
             upColor: '#10b981',
             downColor: '#ef4444',
@@ -73,67 +51,36 @@ export function PriceChart() {
             wickUpColor: '#10b981',
         });
 
-        // Add 30-day MA line series (Orange)
-        const ma30Series = chart.addLineSeries({
-            color: '#f59e0b',
-            lineWidth: 2,
-            title: 'MA 30',
-        });
-
-
-        // Add volume series
         const volumeSeries = chart.addHistogramSeries({
             color: '#6366f1',
-            priceFormat: {
-                type: 'volume',
-            },
+            priceFormat: { type: 'volume' },
             priceScaleId: '',
         });
 
         volumeSeries.priceScale().applyOptions({
-            scaleMargins: {
-                top: 0.9,
-                bottom: 0,
-            },
+            scaleMargins: { top: 0.9, bottom: 0 },
         });
 
-        // Set data if available
         if (historyData?.data) {
             const prices = [...historyData.data].reverse();
-            const closePrices = prices.map((p: any) => p.close);
 
-            // Calculate moving average
-            const ma30Values = calculateSMA(closePrices, 30);
-
-            const candleData = prices.map((p: any) => ({
+            candlestickSeries.setData(prices.map((p: any) => ({
                 time: p.date,
                 open: p.open,
                 high: p.high,
                 low: p.low,
                 close: p.close,
-            }));
+            })));
 
-            const volumeData = prices.map((p: any) => ({
+            volumeSeries.setData(prices.map((p: any) => ({
                 time: p.date,
                 value: p.volume || 0,
                 color: p.close >= p.open ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)',
-            }));
+            })));
 
-            // MA 30 data (filter out nulls)
-            const ma30Data = prices
-                .map((p: any, i: number) => ({
-                    time: p.date,
-                    value: ma30Values[i],
-                }))
-                .filter((d: any) => d.value !== null);
-
-            candlestickSeries.setData(candleData);
-            volumeSeries.setData(volumeData);
-            ma30Series.setData(ma30Data);
             chart.timeScale().fitContent();
         }
 
-        // Handle resize
         const handleResize = () => {
             if (chartContainerRef.current) {
                 chart.applyOptions({ width: chartContainerRef.current.clientWidth });
@@ -141,14 +88,11 @@ export function PriceChart() {
         };
 
         window.addEventListener('resize', handleResize);
-
         return () => {
             window.removeEventListener('resize', handleResize);
             chart.remove();
         };
     }, [historyData]);
 
-    return (
-        <div ref={chartContainerRef} className="chart-container" />
-    );
+    return <div ref={chartContainerRef} className="chart-container" />;
 }

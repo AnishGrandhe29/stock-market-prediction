@@ -12,7 +12,7 @@ import {
 } from '@/lib/predictionMetrics';
 
 interface Prediction {
-    predicted_close: number;
+    predicted_open: number;
     predicted_change_pct: number;
     predicted_direction: string;
     direction_probability?: number;
@@ -52,7 +52,7 @@ export function PredictionCard({ prediction, isLoading, currentPrice }: Predicti
                     </h3>
                     <InfoTooltip
                         title="AI Prediction"
-                        content="Our multimodal deep learning model analyzes price history, technical indicators, and market sentiment to predict the next trading day's closing price."
+                        content="Our multimodal deep learning model analyzes price history, technical indicators, and market sentiment to predict the next trading day's opening price."
                     />
                 </div>
                 <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -101,19 +101,19 @@ export function PredictionCard({ prediction, isLoading, currentPrice }: Predicti
             ?? undefined;
 
         predictionRange = calculatePredictionRange(
-            prediction?.predicted_close,
+            prediction?.predicted_open,
             volatility
         );
     }
 
-    // --- FIX: Determine direction by comparing predicted_close to current price ---
+    // --- FIX: Determine direction by comparing predicted_open to current price ---
     // This is more intuitive - if predicted price is lower than current, it's bearish
-    const predictedClose = prediction?.predicted_close ?? 0;
-    const refPrice = currentPrice ?? predictedClose; // Use current price if available
+    const predictedOpen = prediction?.predicted_open ?? 0;
+    const refPrice = currentPrice ?? predictedOpen; // Use current price if available
 
     // Calculate actual change from current price (not model's predicted change)
     const actualChangePct = refPrice > 0
-        ? ((predictedClose - refPrice) / refPrice) * 100
+        ? ((predictedOpen - refPrice) / refPrice) * 100
         : (prediction?.predicted_change_pct ?? 0);
 
     // Direction based on actual change from current price
@@ -128,17 +128,17 @@ export function PredictionCard({ prediction, isLoading, currentPrice }: Predicti
                 </h3>
                 <InfoTooltip
                     title="AI Prediction"
-                    content="Our multimodal deep learning model analyzes price history, technical indicators, and market sentiment to predict the next trading day's closing price."
+                    content="Our multimodal deep learning model analyzes price history, technical indicators, and market sentiment to predict the next trading day's opening price."
                 />
             </div>
 
             {/* Predicted Value - Updated label to show next trading day */}
             <div className="mb-4">
                 <span className="text-sm text-surface-500">
-                    {targetDateInfo.daysAway === 1 ? "Tomorrow's Close" : `${targetDateInfo.formatted} Close`}
+                    {targetDateInfo.daysAway === 1 ? "Tomorrow's Open" : `${targetDateInfo.formatted} Open`}
                 </span>
                 <div className="text-3xl font-bold text-surface-900 dark:text-white">
-                    ₹{prediction?.predicted_close?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '—'}
+                    ₹{prediction?.predicted_open?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '—'}
                 </div>
             </div>
 

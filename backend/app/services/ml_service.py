@@ -40,7 +40,7 @@ def load_model() -> NIFTY50Predictor:
         price_seq_len=60,
         price_features=5,
         sentiment_features=3,
-        technical_features=15,
+        technical_features=6,  # Updated to match retrained model
         embedding_dim=128,
         dropout=0.2
     )
@@ -48,8 +48,13 @@ def load_model() -> NIFTY50Predictor:
     # Load weights if available
     if model_path.exists():
         try:
-            state_dict = torch.load(model_path, map_location='cpu')
-            _model.load_state_dict(state_dict)
+            state_dict = torch.load(model_path, map_location='cpu', weights_only=True)
+            # Use strict=False to handle architecture mismatches
+            result = _model.load_state_dict(state_dict, strict=False)
+            if result.missing_keys:
+                print(f"Loaded model with {len(result.missing_keys)} missing keys")
+            if result.unexpected_keys:
+                print(f"Loaded model with {len(result.unexpected_keys)} unexpected keys")
             print(f"Loaded model from {model_path}")
         except Exception as e:
             print(f"Error loading model: {e}. Using random initialization.")
@@ -146,8 +151,8 @@ async def get_prediction(
     direction = ["down", "neutral", "up"][direction_idx]
     direction_prob = float(direction_probs[direction_idx])
     
-    # Calculate predicted close price
-    predicted_close = latest_price * (1 + point_pred / 100)
+    # Calculate predicted open price
+    predicted_open = latest_price * (1 + point_pred / 100)
     
     # Compute XAI explanations
     xai_data = _explainer.explain(price_tensor, sentiment_tensor, technical_tensor)
@@ -165,7 +170,7 @@ async def get_prediction(
         symbol=symbol,
         prediction_date=prediction_date,
         target_date=target_date,
-        predicted_close=predicted_close,
+        predicted_open=predicted_open,
         predicted_change_pct=point_pred,
         quantile_5=latest_price * (1 + quantile_5 / 100),
         quantile_50=latest_price * (1 + quantile_50 / 100),
@@ -264,7 +269,7 @@ async def fetch_sentiment_features(symbol: str, db: AsyncSession) -> np.ndarray:
 
 
 async def fetch_technical_features(symbol: str, db: AsyncSession) -> np.ndarray:
-    """Fetch latest technical indicators."""
+    """Fetch latest technical indicators (6 features to match retrained model)."""
     result = await db.execute(
         select(TechnicalIndicator)
         .where(TechnicalIndicator.symbol == symbol)
@@ -275,36 +280,16 @@ async def fetch_technical_features(symbol: str, db: AsyncSession) -> np.ndarray:
     tech = result.scalar_one_or_none()
     
     if tech:
+        # Return 6 features to match model architecture
         data = np.array([
             tech.rsi_14 or 50,
             tech.macd or 0,
             tech.macd_signal or 0,
-            tech.macd_hist or 0,
             tech.stoch_k or 50,
-            tech.stoch_d or 50,
-            tech.ema_5 or 0,
-            tech.ema_20 or 0,
-            tech.ema_50 or 0,
-            tech.sma_20 or 0,
             tech.adx or 25,
             tech.atr_14 or 0,
-            tech.bb_upper or 0,
-            tech.bb_middle or 0,
-            tech.bb_lower or 0,
         ], dtype=np.float32)
         
-        # Replace 0s in critical trend indicators with current price if available
-        # This prevents the "crash" prediction when data is missing
-        latest_price = await get_latest_close(symbol, db)
-        
-        if data[6] == 0: data[6] = latest_price # EMA_5
-        if data[7] == 0: data[7] = latest_price # EMA_20
-        if data[8] == 0: data[8] = latest_price # EMA_50
-        if data[9] == 0: data[9] = latest_price # SMA_20
-        if data[12] == 0: data[12] = latest_price * 1.02 # BB_Upper
-        if data[13] == 0: data[13] = latest_price # BB_Middle
-        if data[14] == 0: data[14] = latest_price * 0.98 # BB_Lower
-
         if _tech_scaler is not None:
              try:
                 data = _tech_scaler.transform(data.reshape(1, -1)).flatten().astype(np.float32)
@@ -313,27 +298,17 @@ async def fetch_technical_features(symbol: str, db: AsyncSession) -> np.ndarray:
         
         return data
     else:
-        # Fallback: Computed indicators on the fly or use defaults
-        print(f"⚠️ Missing technical indicators for {symbol}, using defaults")
+        # Fallback: Default "neutral" values (6 features)
+        print(f"[WARNING] Missing technical indicators for {symbol}, using defaults")
         latest_price = await get_latest_close(symbol, db)
         
-        # Default "neutral" values
         data = np.array([
-            50.0, # RSI
-            0.0, # MACD
-            0.0, # Signal
-            0.0, # Hist
-            50.0, # Stoch K
-            50.0, # Stoch D
-            latest_price, # EMA 5
-            latest_price, # EMA 20
-            latest_price, # EMA 50
-            latest_price, # SMA 20
-            25.0, # ADX
-            latest_price * 0.01, # ATR
-            latest_price * 1.02, # BB Upper
-            latest_price, # BB Middle
-            latest_price * 0.98, # BB Lower
+            50.0,  # RSI (neutral)
+            0.0,   # MACD (neutral)
+            0.0,   # MACD Signal
+            50.0,  # Stoch K (neutral)
+            25.0,  # ADX (weak trend)
+            latest_price * 0.01 if latest_price else 100,  # ATR
         ], dtype=np.float32)
         
         if _tech_scaler is not None:
