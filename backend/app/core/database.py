@@ -1,19 +1,29 @@
 """
 Database connection and session management.
-Uses async SQLAlchemy with PostgreSQL.
+Supports both PostgreSQL (asyncpg) and SQLite (aiosqlite).
 """
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
 from app.config import settings
 
-# Create async engine
-engine = create_async_engine(
-    settings.database_url,
-    echo=False,
-    pool_size=10,
-    max_overflow=20,
-)
+# Determine if using SQLite
+is_sqlite = settings.database_url.startswith("sqlite")
+
+# Create async engine with driver-appropriate settings
+if is_sqlite:
+    engine = create_async_engine(
+        settings.database_url,
+        echo=False,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    engine = create_async_engine(
+        settings.database_url,
+        echo=False,
+        pool_size=10,
+        max_overflow=20,
+    )
 
 # Session factory
 async_session_maker = async_sessionmaker(

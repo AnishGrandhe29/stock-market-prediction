@@ -1,13 +1,14 @@
 """
 User management API endpoints.
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
-from app.core.security import get_current_user, get_password_hash
+from app.core.security import get_current_user, get_password_hash, decode_token
 from app.models.user import User
 from app.models.user_features import Note, WatchlistItem, Alert
 from app.schemas import (
@@ -18,6 +19,26 @@ from app.schemas import (
 )
 
 router = APIRouter()
+
+# Optional auth - returns None if not authenticated (for GET endpoints)
+optional_security = HTTPBearer(auto_error=False)
+
+async def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security)
+) -> Optional[dict]:
+    """Get current user if authenticated, otherwise return None."""
+    if not credentials:
+        return None
+    try:
+        payload = decode_token(credentials.credentials)
+        if payload.get("type") != "access":
+            return None
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+        return {"user_id": user_id, "email": payload.get("email")}
+    except Exception:
+        return None
 
 
 # ============ User Profile ============
@@ -65,10 +86,13 @@ async def update_profile(
 
 @router.get("/notes", response_model=List[NoteResponse])
 async def get_notes(
-    current_user: dict = Depends(get_current_user),
+    current_user: Optional[dict] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get all notes for current user."""
+    """Get all notes for current user. Returns empty list if not authenticated."""
+    if not current_user:
+        return []
+    
     result = await db.execute(
         select(Note)
         .where(Note.user_id == int(current_user["user_id"]))
@@ -156,10 +180,13 @@ async def delete_note(
 
 @router.get("/watchlist", response_model=List[WatchlistItemResponse])
 async def get_watchlist(
-    current_user: dict = Depends(get_current_user),
+    current_user: Optional[dict] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get user's watchlist."""
+    """Get user's watchlist. Returns empty list if not authenticated."""
+    if not current_user:
+        return []
+    
     result = await db.execute(
         select(WatchlistItem)
         .where(WatchlistItem.user_id == int(current_user["user_id"]))

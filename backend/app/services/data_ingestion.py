@@ -14,6 +14,7 @@ from sqlalchemy import select, delete
 
 from app.models.stock import StockPrice
 from app.core.redis import get_cache, set_cache
+from app.services.indicators import compute_technical_indicators
 import json
 
 
@@ -312,6 +313,15 @@ async def fetch_stock_data(
     await set_cache(f"stock_data:{symbol}:{days}", "1", expire=CACHE_TTL_HISTORICAL)
     
     print(f"✅ Stored {len(prices)} new price records for {symbol}")
+    
+    # Compute technical indicators for the new data
+    try:
+        print(f"🔄 Computing technical indicators for {symbol}...")
+        indicators = await compute_technical_indicators(symbol, db)
+        print(f"✅ Computed {len(indicators)} technical indicator records")
+    except Exception as e:
+        print(f"❌ Error computing indicators for {symbol}: {e}")
+        
     return prices
 
 
@@ -363,26 +373,26 @@ async def get_realtime_price(symbol: str) -> dict:
         print(f"📦 Using cached realtime price for {symbol}")
         return json.loads(cached)
     
-    # Try NSE first for NIFTY
-    nse_data = await get_realtime_price_from_nse(symbol)
-    if nse_data:
-        # Get more details from database for previous close
-        # For now, just use the price
-        price_data = {
-            "symbol": symbol,
-            "price": nse_data["price"],
-            "previous_close": nse_data["price"],  # Would need historical data
-            "change": 0,
-            "change_pct": 0,
-            "high": nse_data["price"],
-            "low": nse_data["price"],
-            "open": nse_data["price"],
-            "volume": 0,
-            "timestamp": datetime.now().isoformat(),
-            "source": "nse"
-        }
-        await set_cache(cache_key, json.dumps(price_data), expire=CACHE_TTL_REALTIME)
-        return price_data
+    # Try NSE first for NIFTY - COMMENTED OUT to prioritize Yahoo which has High/Low/Volume
+    # nse_data = await get_realtime_price_from_nse(symbol)
+    # if nse_data:
+    #     # Get more details from database for previous close
+    #     # For now, just use the price
+    #     price_data = {
+    #         "symbol": symbol,
+    #         "price": nse_data["price"],
+    #         "previous_close": nse_data["price"],  # Would need historical data
+    #         "change": 0,
+    #         "change_pct": 0,
+    #         "high": nse_data["price"],
+    #         "low": nse_data["price"],
+    #         "open": nse_data["price"],
+    #         "volume": 0,
+    #         "timestamp": datetime.now().isoformat(),
+    #         "source": "nse"
+    #     }
+    #     await set_cache(cache_key, json.dumps(price_data), expire=CACHE_TTL_REALTIME)
+    #     return price_data
     
     # Fallback to Yahoo Finance with retry logic
     if is_circuit_open("yahoo"):
@@ -404,16 +414,22 @@ async def get_realtime_price(symbol: str) -> dict:
                 previous_close = getattr(fast_info, 'previous_close', None)
                 
                 if current_price:
+                    # Fetch additional metrics from fast_info
+                    day_high = getattr(fast_info, 'day_high', current_price)
+                    day_low = getattr(fast_info, 'day_low', current_price)
+                    day_open = getattr(fast_info, 'open', current_price)
+                    volume = getattr(fast_info, 'last_volume', 0)
+
                     price_data = {
                         "symbol": symbol,
                         "price": current_price,
                         "previous_close": previous_close or current_price,
                         "change": (current_price - previous_close) if previous_close else 0,
                         "change_pct": ((current_price - previous_close) / previous_close * 100) if previous_close else 0,
-                        "high": current_price,
-                        "low": current_price,
-                        "open": current_price,
-                        "volume": 0,
+                        "high": day_high,
+                        "low": day_low,
+                        "open": day_open,
+                        "volume": volume,
                         "timestamp": datetime.now().isoformat(),
                         "source": "yahoo_fast"
                     }

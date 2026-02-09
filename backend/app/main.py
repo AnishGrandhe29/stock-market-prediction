@@ -5,10 +5,11 @@ Sets up routes, middleware, and application lifecycle events.
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.core.database import init_db, close_db
-from app.api.v1 import auth, stocks, predictions, users, websocket
+from app.api.v1 import auth, stocks, predictions, users, websocket, news
 from app.services.scheduler import start_scheduler, stop_scheduler
 
 
@@ -33,6 +34,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Session middleware (required for OAuth)
+app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -48,6 +52,7 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(stocks.router, prefix="/api/v1/stocks", tags=["Stocks"])
 app.include_router(predictions.router, prefix="/api/v1/predictions", tags=["Predictions"])
 app.include_router(websocket.router, prefix="/api/v1/ws", tags=["WebSocket"])
+app.include_router(news.router, prefix="/api/v1/news", tags=["News"])
 
 
 @app.get("/", tags=["Health"])

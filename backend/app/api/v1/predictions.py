@@ -17,7 +17,7 @@ from app.services.ml_service import get_prediction
 router = APIRouter()
 
 
-@router.get("/latest", response_model=PredictionResponse)
+@router.get("/latest", response_model=None)
 async def get_latest_prediction(
     symbol: str = Query(default="^NSEI"),
     db: AsyncSession = Depends(get_db)
@@ -33,7 +33,58 @@ async def get_latest_prediction(
     prediction = result.scalar_one_or_none()
     
     if not prediction:
-        raise HTTPException(status_code=404, detail="No predictions available")
+        # Return fallback mock prediction when database is empty
+        from datetime import datetime, date, timedelta
+        
+        # Calculate next NSE trading day (skip weekends)
+        def get_next_trading_day(reference_date: date) -> date:
+            """Get next valid NSE trading day, skipping weekends."""
+            next_day = reference_date + timedelta(days=1)
+            # Skip Saturday (5) and Sunday (6)
+            while next_day.weekday() >= 5:  # 5=Saturday, 6=Sunday
+                next_day += timedelta(days=1)
+            return next_day
+        
+        target = get_next_trading_day(date.today())
+        
+        # Mock values with CONSISTENT confidence metrics
+        # Using 0.65 = 65% = MEDIUM (thresholds: LOW 0-40%, MEDIUM 41-70%, HIGH 71-100%)
+        predicted_close = 23520.75
+        volatility = 185.0  # Typical NIFTY daily volatility ~0.8% of price
+        z_score_90 = 1.645  # Z-score for 90% CI
+        
+        return {
+            "id": 0,
+            "symbol": symbol,
+            "prediction_date": date.today().isoformat(),
+            "target_date": target.isoformat(),
+            "current_close": 23450.50,
+            "predicted_close": predicted_close,
+            "predicted_high": 23600.00,
+            "predicted_low": 23400.00,
+            "predicted_direction": "up",
+            "predicted_change_pct": 0.30,
+            # Confidence metrics - MUST BE CONSISTENT
+            "confidence_level": "medium",  # 65% falls in MEDIUM (41-70%)
+            "confidence_score": 0.65,      # 65% confidence
+            "direction_probability": 0.65, # Same as confidence_score
+            # Risk and volatility
+            "risk_score": 0.35,
+            "volatility_prediction": volatility,
+            "uncertainty_score": 0.35,
+            # Prediction range (90% CI)
+            "quantile_5": round(predicted_close - (z_score_90 * volatility)),   # Lower bound
+            "quantile_95": round(predicted_close + (z_score_90 * volatility)),  # Upper bound
+            # Sentiment
+            "sentiment_score": 0.15,
+            "modality_weights": {
+                "price": 0.45,
+                "sentiment": 0.30,
+                "technical": 0.25
+            },
+            "created_at": datetime.now().isoformat(),
+            "is_mock": True
+        }
     
     return prediction
 

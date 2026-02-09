@@ -3,15 +3,19 @@ Configuration management using Pydantic Settings.
 Loads environment variables and provides typed config access.
 """
 from functools import lru_cache
+from pathlib import Path
 from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Get the directory where this config.py file is located
+ENV_FILE_PATH = Path(__file__).parent / ".env"
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE_PATH),
         env_file_encoding="utf-8",
         case_sensitive=False,
     )

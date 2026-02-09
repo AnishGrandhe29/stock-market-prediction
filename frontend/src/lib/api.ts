@@ -103,3 +103,11 @@ export const usersAPI = {
         api.post('/users/alerts', data),
     deleteAlert: (id: number) => api.delete(`/users/alerts/${id}`),
 };
+
+export const newsAPI = {
+    getMarketNews: (watchlist?: string[]) => {
+        const params = watchlist?.length ? `?watchlist=${watchlist.join(',')}` : '';
+        return api.get(`/news/market${params}`);
+    },
+};
+

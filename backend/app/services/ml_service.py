@@ -292,6 +292,18 @@ async def fetch_technical_features(symbol: str, db: AsyncSession) -> np.ndarray:
             tech.bb_middle or 0,
             tech.bb_lower or 0,
         ], dtype=np.float32)
+        
+        # Replace 0s in critical trend indicators with current price if available
+        # This prevents the "crash" prediction when data is missing
+        latest_price = await get_latest_close(symbol, db)
+        
+        if data[6] == 0: data[6] = latest_price # EMA_5
+        if data[7] == 0: data[7] = latest_price # EMA_20
+        if data[8] == 0: data[8] = latest_price # EMA_50
+        if data[9] == 0: data[9] = latest_price # SMA_20
+        if data[12] == 0: data[12] = latest_price * 1.02 # BB_Upper
+        if data[13] == 0: data[13] = latest_price # BB_Middle
+        if data[14] == 0: data[14] = latest_price * 0.98 # BB_Lower
 
         if _tech_scaler is not None:
              try:
@@ -300,8 +312,37 @@ async def fetch_technical_features(symbol: str, db: AsyncSession) -> np.ndarray:
                 print(f"Error applying tech scaler: {e}")
         
         return data
-    
-    return np.zeros(15, dtype=np.float32)
+    else:
+        # Fallback: Computed indicators on the fly or use defaults
+        print(f"⚠️ Missing technical indicators for {symbol}, using defaults")
+        latest_price = await get_latest_close(symbol, db)
+        
+        # Default "neutral" values
+        data = np.array([
+            50.0, # RSI
+            0.0, # MACD
+            0.0, # Signal
+            0.0, # Hist
+            50.0, # Stoch K
+            50.0, # Stoch D
+            latest_price, # EMA 5
+            latest_price, # EMA 20
+            latest_price, # EMA 50
+            latest_price, # SMA 20
+            25.0, # ADX
+            latest_price * 0.01, # ATR
+            latest_price * 1.02, # BB Upper
+            latest_price, # BB Middle
+            latest_price * 0.98, # BB Lower
+        ], dtype=np.float32)
+        
+        if _tech_scaler is not None:
+             try:
+                data = _tech_scaler.transform(data.reshape(1, -1)).flatten().astype(np.float32)
+             except Exception as e:
+                print(f"Error applying tech scaler: {e}")
+                
+        return data
 
 
 async def get_latest_close(symbol: str, db: AsyncSession) -> float:
