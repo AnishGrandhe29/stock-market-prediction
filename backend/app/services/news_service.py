@@ -369,41 +369,12 @@ def prioritize_watchlist_news(news: List[Dict[str, Any]], watchlist: List[str]) 
     return watchlist_news + other_news
 
 
-# Fallback news when APIs fail
-FALLBACK_NEWS = [
-    {
-        "id": "fallback1",
-        "title": "Indian Markets Show Resilience Amid Global Uncertainty",
-        "summary": "NIFTY 50 continues to demonstrate strength as domestic investors maintain confidence despite global headwinds.",
-        "source": "Market Watch",
-        "url": "#",
-        "publishedAt": datetime.now().isoformat(),
-        "sentiment": "neutral",
-        "impact": "medium",
-        "category": "Market Update",
-        "relatedStocks": [],
-    },
-    {
-        "id": "fallback2",
-        "title": "Banking Sector Leads Market Gains",
-        "summary": "HDFC Bank, ICICI Bank, and SBI drive index higher as credit growth remains robust.",
-        "source": "Financial News",
-        "url": "#",
-        "publishedAt": (datetime.now() - timedelta(hours=2)).isoformat(),
-        "sentiment": "positive",
-        "impact": "high",
-        "category": "Sector Update",
-        "relatedStocks": ["HDFCBANK", "ICICIBANK", "SBIN"],
-    },
-]
-
-
 async def get_news_with_fallback(watchlist: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """Get news with fallback to sample data if APIs fail."""
+    """Get news - returns empty list if APIs fail (no fake data in production)."""
     news = await get_market_news(watchlist)
     
     if not news:
-        print("⚠️ Using fallback news data")
-        return FALLBACK_NEWS
+        print("⚠️ No news available from any source")
+        return []
     
     return news

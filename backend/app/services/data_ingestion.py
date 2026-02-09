@@ -1,7 +1,7 @@
 """
 Data ingestion service for stock data.
 Fetches OHLCV data from multiple sources with fallback strategy.
-Priority: NSE India -> Yahoo Finance -> Cached/Fallback
+Priority: NSE India -> Yahoo Finance -> Alpha Vantage -> Cached/Fallback
 """
 import asyncio
 import time
@@ -15,7 +15,9 @@ from sqlalchemy import select, delete
 from app.models.stock import StockPrice
 from app.core.redis import get_cache, set_cache
 from app.services.indicators import compute_technical_indicators
+from app.config import settings
 import json
+import aiohttp
 
 
 # Configuration
@@ -29,7 +31,8 @@ NSE_REQUEST_DELAY = 1  # 1 second between NSE requests
 # Circuit breaker configuration
 CIRCUIT_BREAKER = {
     "yahoo": {"failures": 0, "last_failure": None, "open_until": None},
-    "nse": {"failures": 0, "last_failure": None, "open_until": None}
+    "nse": {"failures": 0, "last_failure": None, "open_until": None},
+    "alpha_vantage": {"failures": 0, "last_failure": None, "open_until": None}
 }
 CIRCUIT_BREAKER_THRESHOLD = 3  # Open circuit after 3 failures
 CIRCUIT_BREAKER_TIMEOUT = 300  # 5 minutes
@@ -37,7 +40,8 @@ CIRCUIT_BREAKER_TIMEOUT = 300  # 5 minutes
 # Rate limiting
 LAST_REQUEST_TIME = {
     "yahoo": None,
-    "nse": None
+    "nse": None,
+    "alpha_vantage": None
 }
 
 
@@ -227,6 +231,95 @@ async def fetch_from_yahoo(symbol: str, days: int = 365) -> Optional[pd.DataFram
     except Exception as e:
         print(f"❌ Yahoo fetch failed: {str(e)}")
         record_failure("yahoo")
+        return None
+
+
+async def fetch_from_alpha_vantage(symbol: str) -> Optional[Dict[str, Any]]:
+    """
+    Fetch real-time price from Alpha Vantage (backup for Yahoo Finance).
+    Free tier: 25 requests/day, 5 requests/minute.
+    """
+    if is_circuit_open("alpha_vantage"):
+        print("⚠️ Alpha Vantage circuit breaker is open, skipping")
+        return None
+    
+    if not settings.alpha_vantage_api_key:
+        print("⚠️ Alpha Vantage API key not configured")
+        return None
+    
+    try:
+        await rate_limit_delay("alpha_vantage")
+        
+        # Map our symbols to Alpha Vantage format
+        # NIFTY 50 is available as an ETF tracking it
+        av_symbol = symbol
+        if symbol == "^NSEI":
+            # Use NIFTY 50 ETF or BSE index as proxy
+            av_symbol = "NSEI.BSE"  # Try BSE index
+        
+        url = (
+            f"https://www.alphavantage.co/query"
+            f"?function=GLOBAL_QUOTE"
+            f"&symbol={av_symbol}"
+            f"&apikey={settings.alpha_vantage_api_key}"
+        )
+        
+        print(f"📊 Fetching {symbol} from Alpha Vantage...")
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=15) as response:
+                if response.status != 200:
+                    print(f"❌ Alpha Vantage HTTP error: {response.status}")
+                    record_failure("alpha_vantage")
+                    return None
+                
+                data = await response.json()
+        
+        # Check for API errors
+        if "Error Message" in data or "Note" in data:
+            error_msg = data.get("Error Message") or data.get("Note", "Rate limit")
+            print(f"⚠️ Alpha Vantage API: {error_msg}")
+            record_failure("alpha_vantage")
+            return None
+        
+        quote = data.get("Global Quote", {})
+        if not quote:
+            print("⚠️ Alpha Vantage: No data returned")
+            record_failure("alpha_vantage")
+            return None
+        
+        # Parse the response
+        current_price = float(quote.get("05. price", 0))
+        previous_close = float(quote.get("08. previous close", 0))
+        
+        if current_price == 0:
+            record_failure("alpha_vantage")
+            return None
+        
+        record_success("alpha_vantage")
+        print(f"✅ Alpha Vantage: Got price {current_price} for {symbol}")
+        
+        return {
+            "symbol": symbol,
+            "price": current_price,
+            "previous_close": previous_close or current_price,
+            "change": float(quote.get("09. change", 0)),
+            "change_pct": float(quote.get("10. change percent", "0").replace("%", "")),
+            "high": float(quote.get("03. high", current_price)),
+            "low": float(quote.get("04. low", current_price)),
+            "open": float(quote.get("02. open", current_price)),
+            "volume": int(quote.get("06. volume", 0)),
+            "timestamp": datetime.now().isoformat(),
+            "source": "alpha_vantage"
+        }
+        
+    except asyncio.TimeoutError:
+        print("❌ Alpha Vantage request timed out")
+        record_failure("alpha_vantage")
+        return None
+    except Exception as e:
+        print(f"❌ Alpha Vantage fetch failed: {str(e)}")
+        record_failure("alpha_vantage")
         return None
 
 
@@ -481,29 +574,86 @@ async def get_realtime_price(symbol: str) -> dict:
                 record_failure("yahoo")
                 break
     
-    # All sources failed, return fallback
-    print(f"⚠️ All sources failed for {symbol}, using fallback data")
-    fallback_data = get_fallback_price_data(symbol)
-    await set_cache(cache_key, json.dumps(fallback_data), expire=30)  # Short cache for fallback
-    return fallback_data
+    # Try Alpha Vantage as backup
+    alpha_data = await fetch_from_alpha_vantage(symbol)
+    if alpha_data:
+        await set_cache(cache_key, json.dumps(alpha_data), expire=CACHE_TTL_REALTIME)
+        return alpha_data
+    
+    # Use database's last known price as graceful fallback
+    print(f"⚠️ All APIs failed for {symbol}, using database cache")
+    db_fallback = await get_db_cached_price(symbol)
+    if db_fallback:
+        await set_cache(cache_key, json.dumps(db_fallback), expire=60)  # Short cache
+        return db_fallback
+    
+    # Last resort: return unavailable status (frontend should handle gracefully)
+    print(f"❌ No data available for {symbol}")
+    return get_unavailable_price_data(symbol)
 
 
-def get_fallback_price_data(symbol: str) -> dict:
-    """Return fallback price data when all sources fail."""
+async def get_db_cached_price(symbol: str) -> Optional[dict]:
+    """Get last known price from database when APIs fail."""
+    try:
+        from app.core.database import get_db
+        from sqlalchemy import select
+        
+        # Import here to avoid circular imports
+        async for db in get_db():
+            result = await db.execute(
+                select(StockPrice)
+                .where(StockPrice.symbol == symbol)
+                .order_by(StockPrice.date.desc())
+                .limit(1)
+            )
+            price = result.scalar_one_or_none()
+            
+            if price:
+                return {
+                    "symbol": symbol,
+                    "price": price.close,
+                    "previous_close": price.close,
+                    "change": 0.0,
+                    "change_pct": 0.0,
+                    "high": price.high,
+                    "low": price.low,
+                    "open": price.open,
+                    "volume": price.volume or 0,
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "database_cache",
+                    "cache_date": price.date.isoformat(),
+                    "is_cached": True
+                }
+            break
+    except Exception as e:
+        print(f"⚠️ DB cache lookup failed: {e}")
+    
+    return None
+
+
+def get_unavailable_price_data(symbol: str) -> dict:
+    """Return unavailable status when all sources fail (no fake data)."""
     return {
         "symbol": symbol,
-        "price": 22000.0,  # Default NIFTY value
-        "previous_close": 22000.0,
-        "change": 0.0,
-        "change_pct": 0.0,
-        "high": 22000.0,
-        "low": 22000.0,
-        "open": 22000.0,
-        "volume": 0,
+        "price": None,
+        "previous_close": None,
+        "change": None,
+        "change_pct": None,
+        "high": None,
+        "low": None,
+        "open": None,
+        "volume": None,
         "timestamp": datetime.now().isoformat(),
-        "source": "fallback",
-        "error": "All data sources unavailable"
+        "source": "unavailable",
+        "error": "All data sources temporarily unavailable",
+        "is_unavailable": True
     }
+
+
+# Keep old function name for compatibility but mark as deprecated
+def get_fallback_price_data(symbol: str) -> dict:
+    """DEPRECATED: Use get_unavailable_price_data instead."""
+    return get_unavailable_price_data(symbol)
 
 
 async def fetch_nifty50_constituents(db: AsyncSession):

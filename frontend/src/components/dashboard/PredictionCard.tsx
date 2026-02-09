@@ -42,6 +42,32 @@ export function PredictionCard({ prediction, isLoading, currentPrice }: Predicti
         );
     }
 
+    // Handle pending state - prediction not yet generated
+    if (!prediction || (prediction as any).is_pending || (prediction as any).status === 'pending') {
+        return (
+            <div className="card p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-surface-900 dark:text-white">
+                        AI Prediction
+                    </h3>
+                    <InfoTooltip
+                        title="AI Prediction"
+                        content="Our multimodal deep learning model analyzes price history, technical indicators, and market sentiment to predict the next trading day's closing price."
+                    />
+                </div>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4" />
+                    <p className="text-surface-600 dark:text-surface-400 font-medium">
+                        Generating prediction...
+                    </p>
+                    <p className="text-sm text-surface-500 mt-2">
+                        The model is analyzing latest market data
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     // --- PROBLEM 1 FIX: Calculate next valid NSE trading day ---
     const targetDateInfo = getPredictionTargetDate();
 

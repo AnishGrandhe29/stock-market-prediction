@@ -346,7 +346,7 @@ async def fetch_technical_features(symbol: str, db: AsyncSession) -> np.ndarray:
 
 
 async def get_latest_close(symbol: str, db: AsyncSession) -> float:
-    """Get the latest closing price."""
+    """Get the latest closing price from database."""
     result = await db.execute(
         select(StockPrice)
         .where(StockPrice.symbol == symbol)
@@ -355,7 +355,11 @@ async def get_latest_close(symbol: str, db: AsyncSession) -> float:
     )
     
     price = result.scalar_one_or_none()
-    return price.close if price else 22000.0  # Default NIFTY level
+    if price:
+        return price.close
+    
+    # No fake data - raise exception if no real data exists
+    raise ValueError(f"No price data available for {symbol}. Please run data population first.")
 
 
 def get_next_trading_day() -> date:

@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     reddit_client_secret: str = ""
     reddit_user_agent: str = "NIFTY50Predictor/1.0"
     
+    # Stock Data APIs (backup for Yahoo Finance)
+    alpha_vantage_api_key: str = ""
+    
     # Frontend
     frontend_url: str = "http://localhost:3000"
     cors_origins: List[str] = ["http://localhost:3000"]
