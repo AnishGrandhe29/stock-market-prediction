@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     Brain,
@@ -16,6 +17,12 @@ import { predictionsAPI, stocksAPI } from '@/lib/api';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 export default function PredictionsPage() {
+    const [currentDate, setCurrentDate] = useState<string>('');
+
+    useEffect(() => {
+        setCurrentDate(new Date().toLocaleDateString());
+    }, []);
+
     // Fetch latest prediction
     const { data: latestPrediction, isLoading: latestLoading } = useQuery({
         queryKey: ['latest-prediction'],
@@ -163,7 +170,7 @@ export default function PredictionsPage() {
                         Latest Prediction
                     </h2>
                     <span className="text-sm text-surface-500">
-                        Generated: {new Date().toLocaleDateString()}
+                        Generated: {currentDate}
                     </span>
                 </div>
 
@@ -246,7 +253,7 @@ export default function PredictionsPage() {
                                     className="border-b border-surface-100 dark:border-surface-700/50 hover:bg-surface-50 dark:hover:bg-surface-700/30"
                                 >
                                     <td className="py-3 px-4 text-sm text-surface-900 dark:text-white">
-                                        {item.prediction_date || new Date().toLocaleDateString()}
+                                        {item.prediction_date || currentDate}
                                     </td>
                                     <td className="py-3 px-4">
                                         <span className={`inline-flex items-center gap-1 text-sm font-medium ${item.predicted_direction === 'up'
