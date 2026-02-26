@@ -1,8 +1,0 @@
-﻿Initializing...
-Imports 1...
-Torch imported
-Path modified: A:\project\project-final-anish\stock-market-prediction\backend
-Config imported
-SQLAlchemy imported
-ML Service imported
-============================================================
