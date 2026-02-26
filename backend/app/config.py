@@ -5,6 +5,7 @@ Loads environment variables and provides typed config access.
 from functools import lru_cache
 from pathlib import Path
 from typing import List
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Get the directory where this config.py file is located
@@ -21,11 +22,11 @@ class Settings(BaseSettings):
     )
     
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/nifty50_predict"
-    redis_url: str = "redis://localhost:6379"
+    database_url: str = Field(default="postgresql+asyncpg://postgres:password@localhost:5432/nifty50_predict")
+    redis_url: str = Field(default="redis://localhost:6379")
     
     # Security
-    secret_key: str = "change-this-in-production"
+    secret_key: str = Field(...)  # Requires environment variable setup. No fallback strings.
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7

@@ -10,6 +10,7 @@ from sqlalchemy import select, and_
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.utils import get_next_trading_day
 from app.models.prediction import Prediction, PredictionAccuracy
 from app.schemas import PredictionResponse, PredictionRequest
 from app.services.ml_service import get_prediction
@@ -35,13 +36,6 @@ async def get_latest_prediction(
     if not prediction:
         # Return "pending" status instead of mock data
         # Frontend should show "Prediction generating..." or similar
-        from datetime import datetime, date, timedelta
-        
-        def get_next_trading_day(reference_date: date) -> date:
-            next_day = reference_date + timedelta(days=1)
-            while next_day.weekday() >= 5:
-                next_day += timedelta(days=1)
-            return next_day
         
         return {
             "id": None,
@@ -117,18 +111,10 @@ async def get_xai_explanation(
         "prediction_id": prediction.id,
         "target_date": prediction.target_date,
         "predicted_value": prediction.predicted_open,
-        "shap_values": prediction.shap_values or {},
-        "modality_weights": prediction.modality_weights or {
-            "price": 0.45,
-            "sentiment": 0.30,
-            "technical": 0.25,
-        },
-        "top_features": prediction.top_features or [
-            {"feature": "RSI_14", "importance": 0.15, "direction": "positive"},
-            {"feature": "News Sentiment", "importance": 0.12, "direction": "positive"},
-            {"feature": "EMA_20 Crossover", "importance": 0.10, "direction": "negative"},
-        ],
-        "attention_weights": prediction.attention_weights or {},
+        "shap_values": prediction.shap_values,
+        "modality_weights": prediction.modality_weights,
+        "top_features": prediction.top_features,
+        "attention_weights": prediction.attention_weights,
         "explanation_text": generate_explanation_text(prediction),
     }
 
@@ -149,17 +135,7 @@ async def get_prediction_accuracy(
     accuracies = result.scalars().all()
     
     if not accuracies:
-        # Return dummy data if no real data
-        return {
-            "period": period,
-            "metrics": {
-                "direction_accuracy": 0.68,
-                "mae": 45.2,
-                "rmse": 62.8,
-                "mape": 0.52,
-            },
-            "history": [],
-        }
+        raise HTTPException(status_code=404, detail="Accuracy history not found for the specified period")
     
     return {
         "period": period,
