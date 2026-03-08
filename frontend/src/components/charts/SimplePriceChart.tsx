@@ -62,7 +62,16 @@ export function SimplePriceChart() {
         });
 
         if (historyData?.data) {
-            const prices = [...historyData.data].reverse();
+            // Sort ascending by date and deduplicate to prevent
+            // "data must be asc ordered by time" assertion
+            const sorted = [...historyData.data]
+                .sort((a: any, b: any) => (a.date > b.date ? 1 : -1));
+            const seen = new Set<string>();
+            const prices = sorted.filter((p: any) => {
+                if (seen.has(p.date)) return false;
+                seen.add(p.date);
+                return true;
+            });
 
             candlestickSeries.setData(prices.map((p: any) => ({
                 time: p.date,

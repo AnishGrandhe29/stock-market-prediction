@@ -10,7 +10,8 @@ import {
     Bell,
     Star,
     FileText,
-    HelpCircle
+    HelpCircle,
+    Cpu,
 } from 'lucide-react';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import clsx from 'clsx';
@@ -39,6 +40,12 @@ const menuItems = [
         href: '/xai',
         icon: HelpCircle,
         tooltip: 'Explainable AI - understand why the model made its predictions',
+    },
+    {
+        label: 'Model Info',
+        href: '/model',
+        icon: Cpu,
+        tooltip: 'Explore the model architecture, training details, and novelty points',
     },
     { divider: true },
     {
@@ -72,55 +79,55 @@ export function Sidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className= "fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-surface-800 border-r border-surface-200 dark:border-surface-700 p-4 overflow-y-auto" >
-        <nav className="space-y-1" >
-        {
-            menuItems.map((item, index) => {
-                if ('divider' in item) {
-                    return <hr key={ index } className = "my-4 border-surface-200 dark:border-surface-700" />;
+        <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-surface-800 border-r border-surface-200 dark:border-surface-700 p-4 overflow-y-auto" >
+            <nav className="space-y-1" >
+                {
+                    menuItems.map((item, index) => {
+                        if ('divider' in item) {
+                            return <hr key={index} className="my-4 border-surface-200 dark:border-surface-700" />;
+                        }
+
+                        const Icon = item.icon;
+                        const isActive = pathname === item.href;
+
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={
+                                    clsx(
+                                        'flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200',
+                                        isActive
+                                            ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium'
+                                            : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-700'
+                                    )
+                                }
+                            >
+                                <div className="flex items-center gap-3" >
+                                    <Icon className="w-5 h-5" />
+                                    <span>{item.label} </span>
+                                </div>
+                                < InfoTooltip title={item.label} content={item.tooltip} />
+                            </Link>
+                        );
+                    })
                 }
+            </nav>
 
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-
-                return (
-                    <Link
-              key= { item.href }
-                href = { item.href }
-                className = {
-                    clsx(
-                'flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200',
-                        isActive
-                            ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium'
-                  : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-700'
-                    )
-                }
-                    >
-                    <div className="flex items-center gap-3" >
-                        <Icon className="w-5 h-5" />
-                            <span>{ item.label } </span>
-                            </div>
-                            < InfoTooltip title = { item.label } content = { item.tooltip } />
-                                </Link>
-          );
-        })
-}
-</nav>
-
-{/* Model Info Card */ }
-<div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-primary-500/10 to-primary-700/10 border border-primary-200 dark:border-primary-800" >
-    <div className="flex items-center gap-2 mb-2" >
-        <Brain className="w-5 h-5 text-primary-500" />
-            <span className="font-medium text-primary-700 dark:text-primary-300" > Model Status </span>
+            {/* Model Info Card */}
+            <div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-primary-500/10 to-primary-700/10 border border-primary-200 dark:border-primary-800" >
+                <div className="flex items-center gap-2 mb-2" >
+                    <Brain className="w-5 h-5 text-primary-500" />
+                    <span className="font-medium text-primary-700 dark:text-primary-300" > Model Status </span>
                 </div>
-                < p className = "text-sm text-surface-600 dark:text-surface-400" >
+                < p className="text-sm text-surface-600 dark:text-surface-400" >
                     Multimodal TCN - BERT
-                        </p>
-                        < div className = "mt-2 flex items-center gap-2" >
-                            <span className="w-2 h-2 bg-success-500 rounded-full" />
-                                <span className="text-xs text-success-600 dark:text-success-400" > Online </span>
-                                    </div>
-                                    </div>
-                                    </aside>
-  );
+                </p>
+                < div className="mt-2 flex items-center gap-2" >
+                    <span className="w-2 h-2 bg-success-500 rounded-full" />
+                    <span className="text-xs text-success-600 dark:text-success-400" > Online </span>
+                </div>
+            </div>
+        </aside>
+    );
 }

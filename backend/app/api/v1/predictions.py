@@ -3,7 +3,7 @@ Prediction API endpoints.
 Provides ML model predictions with XAI explanations.
 """
 from typing import List, Optional
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_

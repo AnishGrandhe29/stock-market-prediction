@@ -124,6 +124,9 @@ class PredictionResponse(BaseModel):
     confidence_level: Optional[str]
     predicted_direction: Optional[str]
     direction_probability: Optional[float]
+    trend: Optional[str]  # Bullish / Bearish / Neutral
+    signal: Optional[str]  # BUY / HOLD / SELL
+    confidence_score: Optional[float]  # 0-1 numerical confidence
     
     # XAI
     shap_values: Optional[Dict[str, Any]]

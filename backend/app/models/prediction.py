@@ -36,6 +36,11 @@ class Prediction(Base):
     predicted_direction = Column(Text, nullable=True)  # up/down/neutral
     direction_probability = Column(Float, nullable=True)  # 0-1
     
+    # Trend & Signal
+    trend = Column(Text, nullable=True)  # Bullish/Bearish/Neutral
+    signal = Column(Text, nullable=True)  # BUY/HOLD/SELL
+    confidence_score = Column(Float, nullable=True)  # 0-1 numerical confidence
+    
     # Actual values (filled after market close)
     actual_close = Column(Float, nullable=True)
     actual_change_pct = Column(Float, nullable=True)

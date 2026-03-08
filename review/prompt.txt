@@ -1,0 +1,15 @@
+You are a strict engineering project evaluation panel member.
+
+Analyze the attached project PPT and reference papers and identify:
+- The most suitable base paper for this project.
+- The research gap in that paper.
+- The novelty introduced in our project.
+- Weak points that reviewers may question.
+- Suggested answers to defend the project during review.
+
+Output:
+1. Base Paper
+2. Research Gap
+3. Proposed Solution
+4. Novelty Points (bullet points)
+5. Possible Viva Questions and Answers

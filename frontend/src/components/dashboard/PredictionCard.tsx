@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Shield, Target } from 'lucide-react';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import { getPredictionTargetDate } from '@/lib/tradingDays';
 import {
@@ -23,6 +23,8 @@ interface Prediction {
     quantile_5?: number;
     quantile_95?: number;
     target_date?: string;
+    trend?: string;   // Bullish / Bearish / Neutral
+    signal?: string;  // BUY / HOLD / SELL
 }
 
 interface PredictionCardProps {
@@ -157,13 +159,42 @@ export function PredictionCard({ prediction, isLoading, currentPrice }: Predicti
                 </span>
             </div>
 
-            {/* Confidence Badge - FIXED to match percentage */}
+            {/* Confidence Badge */}
             <div className="flex items-center gap-2 mb-4">
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${colors.bg} ${colors.text}`}>
                     {confidenceMetrics.level === 'high' && <CheckCircle className="w-4 h-4 inline mr-1" />}
                     {confidenceMetrics.level === 'low' && <AlertTriangle className="w-4 h-4 inline mr-1" />}
                     {confidenceMetrics.level.toUpperCase()} CONFIDENCE
                 </span>
+            </div>
+
+            {/* Trend & Signal Badges */}
+            <div className="flex items-center gap-2 mb-4">
+                {/* Trend Badge */}
+                {prediction?.trend && (
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${prediction.trend === 'Bullish'
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                            : prediction.trend === 'Bearish'
+                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400'
+                        }`}>
+                        <Target className="w-3.5 h-3.5" />
+                        {prediction.trend}
+                    </span>
+                )}
+
+                {/* Signal Badge */}
+                {prediction?.signal && (
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${prediction.signal === 'BUY'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/30 dark:text-emerald-300'
+                            : prediction.signal === 'SELL'
+                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-500/30 dark:text-rose-300'
+                                : 'bg-amber-100 text-amber-800 dark:bg-amber-500/30 dark:text-amber-300'
+                        }`}>
+                        <Shield className="w-3.5 h-3.5" />
+                        {prediction.signal}
+                    </span>
+                )}
             </div>
 
             {/* Prediction Range - FIXED with proper calculation */}

@@ -15,6 +15,9 @@ import {
 import { stocksAPI, predictionsAPI } from '@/lib/api';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import { PredictionCard } from '@/components/dashboard/PredictionCard';
+import { ConfidenceIntervalChart } from '@/components/dashboard/ConfidenceIntervalChart';
+import { SentimentGauge } from '@/components/dashboard/SentimentGauge';
+import { ModelArchitecturePanel } from '@/components/dashboard/ModelArchitecturePanel';
 import { SimplePriceChart } from '@/components/charts/SimplePriceChart';
 import { ModalityWeights } from '@/components/xai/ModalityWeights';
 import { TopFeatures } from '@/components/xai/TopFeatures';
@@ -43,6 +46,12 @@ export default function Dashboard() {
         queryFn: () => predictionsAPI.getLatest('^NSEI'),
     });
 
+    // Fetch sentiment data
+    const { data: sentimentData } = useQuery({
+        queryKey: ['sentiment'],
+        queryFn: () => stocksAPI.getSentiment('^NSEI', 1),
+    });
+
     // Fetch market status
     const { data: marketStatus } = useQuery({
         queryKey: ['market-status'],
@@ -52,6 +61,7 @@ export default function Dashboard() {
     const price = priceData?.data;
     const prediction = predictionData?.data;
     const isPositive = price?.change_pct >= 0;
+    const sentiment = sentimentData?.data?.[0];
 
     return (
         <div className="space-y-6" >
@@ -198,9 +208,18 @@ export default function Dashboard() {
                     <SimplePriceChart />
                 </div>
 
-                {/* Prediction Card */}
+                {/* Prediction Card + Confidence + Sentiment */}
                 <div className="space-y-6" >
                     <PredictionCard prediction={prediction} isLoading={predictionLoading} currentPrice={price?.price} />
+
+                    {/* Confidence Interval */}
+                    <ConfidenceIntervalChart
+                        currentPrice={price?.price}
+                        predictedPrice={prediction?.predicted_open}
+                        quantile5={prediction?.quantile_5}
+                        quantile95={prediction?.quantile_95}
+                        changePct={prediction?.predicted_change_pct}
+                    />
 
                     {/* Modality Weights */}
                     < div className="card p-6" >
@@ -215,6 +234,13 @@ export default function Dashboard() {
                         </div>
                         < ModalityWeights weights={prediction?.modality_weights} />
                     </div>
+
+                    {/* Sentiment Gauge */}
+                    <SentimentGauge
+                        newsSentiment={sentiment?.news_sentiment ?? prediction?.input_features?.sentiment?.[0]}
+                        redditSentiment={sentiment?.reddit_sentiment ?? prediction?.input_features?.sentiment?.[1]}
+                        combinedSentiment={sentiment?.combined_sentiment ?? prediction?.input_features?.sentiment?.[2]}
+                    />
                 </div>
             </div>
 
@@ -234,6 +260,9 @@ export default function Dashboard() {
                 </div>
                 < TopFeatures features={prediction?.top_features} />
             </div>
+
+            {/* Model Architecture */}
+            <ModelArchitecturePanel />
         </div>
     );
 }
