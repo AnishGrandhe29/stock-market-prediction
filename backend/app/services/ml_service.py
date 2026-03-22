@@ -15,16 +15,11 @@ from sqlalchemy import select, and_
 from app.config import settings
 from app.models.stock import StockPrice, TechnicalIndicator, SentimentScore
 from app.models.prediction import Prediction
-from app.ml.models.fusion import NIFTY50Predictor
-from app.ml.models.technical import TECHNICAL_FEATURES
-from app.ml.explainability.shap_explainer import MultimodalSHAP
+from app.ml.models.acmi import ACMIPredictor
 
 
 # Global model instance
-_model: Optional[NIFTY50Predictor] = None
-_explainer: Optional[MultimodalSHAP] = None
-_price_scaler = None
-_tech_scaler = None
+_model: Optional[ACMIPredictor] = None
 
 # Prediction cache: key -> (timestamp, result_dict)
 _prediction_cache: Dict[str, Tuple[float, dict]] = {}
@@ -35,71 +30,29 @@ MAX_DAILY_RETURN_PCT = 2.0   # ±2% for point prediction
 MAX_QUANTILE_RANGE_PCT = 3.0 # ±3% for uncertainty band
 
 
-def load_model() -> NIFTY50Predictor:
+def load_model() -> ACMIPredictor:
     """Load the trained model from disk."""
-    global _model, _explainer
+    global _model
     
     if _model is not None:
         return _model
     
-    model_path = Path(settings.model_path)
+    model_path = Path("a:/Project/stock-market-prediction/models/acmi_best_model.pt")
+    scaler_path = Path("a:/Project/stock-market-prediction/models/scalers.pkl")
+    ensemble_path = Path("a:/Project/stock-market-prediction/models/acmi_ensemble.pt")
     
-    # Initialize model
-    _model = NIFTY50Predictor(
-        price_seq_len=60,
-        price_features=5,
-        sentiment_features=3,
-        technical_features=6,  # Updated to match retrained model
-        embedding_dim=128,
-        dropout=0.2
-    )
-    
-    # Load weights if available
-    if model_path.exists():
-        try:
-            state_dict = torch.load(model_path, map_location='cpu', weights_only=True)
-            # Use strict=False to handle architecture mismatches
-            result = _model.load_state_dict(state_dict, strict=False)
-            if result.missing_keys:
-                print(f"Loaded model with {len(result.missing_keys)} missing keys")
-            if result.unexpected_keys:
-                print(f"Loaded model with {len(result.unexpected_keys)} unexpected keys")
-            print(f"Loaded model from {model_path}")
-        except Exception as e:
-            print(f"Error loading model: {e}. Using random initialization.")
-    else:
-        print(f"Model not found at {model_path}. Using random initialization.")
-    
-    _model.eval()
-
-    # Load scalers
-    global _price_scaler, _tech_scaler
-    price_scaler_path = Path(settings.price_scaler_path)
-    tech_scaler_path = Path(settings.tech_scaler_path)
-
-    if price_scaler_path.exists():
-        try:
-            _price_scaler = joblib.load(price_scaler_path)
-            print(f"Loaded price scaler from {price_scaler_path}")
-        except Exception as e:
-            print(f"Error loading price scaler: {e}")
-
-    if tech_scaler_path.exists():
-        try:
-            _tech_scaler = joblib.load(tech_scaler_path)
-            print(f"Loaded tech scaler from {tech_scaler_path}")
-        except Exception as e:
-            print(f"Error loading tech scaler: {e}")
-    
-    # Initialize explainer
-    _explainer = MultimodalSHAP(
-        model=_model,
-        feature_names={
-            "technical": TECHNICAL_FEATURES,
-            "sentiment": ["news_sentiment", "reddit_sentiment", "combined_sentiment"],
-            "price": ["open", "high", "low", "close", "volume"],
-        }
-    )
+    # Initialize robust model wrapper
+    try:
+        _model = ACMIPredictor(
+            model_path=str(model_path),
+            scaler_path=str(scaler_path),
+            ensemble_path=str(ensemble_path) if ensemble_path.exists() else None,
+            device="cpu"  # Force CPU for API inference
+        )
+        print(f"Loaded ACMI++ predictor from {model_path}")
+    except Exception as e:
+        print(f"Error loading ACMI++ model: {e}")
+        _model = None
     
     return _model
 
@@ -181,62 +134,36 @@ async def get_prediction(
     if cache_key in _prediction_cache:
         cached_ts, cached_pred = _prediction_cache[cache_key]
         if now - cached_ts < _CACHE_TTL_SECONDS:
-            # Return a fresh DB row from the cached numbers
             return cached_pred
 
-    # ── Fetch input data ──
-    price_data = await fetch_price_features(symbol, db)
-    sentiment_data = await fetch_sentiment_features(symbol, db)
-    technical_data = await fetch_technical_features(symbol, db)
+    # ── Run inference using ACMIPredictor ──
+    try:
+        # ACMIPredictor handles internal historical features download and engineering
+        result_dict = model.predict(symbol)
+    except Exception as e:
+        print(f"Error in ACMIPredictor for {symbol}: {e}")
+        raise ValueError(f"Could not generate prediction: {e}")
 
-    # Get latest price for reference
-    latest_price = await get_latest_close(symbol, db)
+    latest_price = result_dict.get("latest_price", 1.0)
+    horizon_1d = result_dict["horizons"]["1d"]
+    horizon_5d = result_dict["horizons"]["5d"]
+    horizon_20d = result_dict["horizons"]["20d"]
+    horizon_60d = result_dict["horizons"]["60d"]
 
-    # Convert to tensors
-    price_tensor = torch.tensor(price_data, dtype=torch.float32).unsqueeze(0)
-    sentiment_tensor = torch.tensor(sentiment_data, dtype=torch.float32).unsqueeze(0)
-    technical_tensor = torch.tensor(technical_data, dtype=torch.float32).unsqueeze(0)
-
-    # ── Run inference ──
-    model.eval()
-    with torch.no_grad():
-        output = model(price_tensor, sentiment_tensor, technical_tensor)
-
-    # ── Extract & clamp predictions ──
-    raw_point = output["point_prediction"].item()
-    raw_q5 = output["quantile_5"].item()
-    raw_q50 = output["quantile_50"].item()
-    raw_q95 = output["quantile_95"].item()
-    uncertainty = output["uncertainty"].item()
-
-    # Clamp to realistic daily movement
-    point_pred = _clamp(raw_point, -MAX_DAILY_RETURN_PCT, MAX_DAILY_RETURN_PCT)
-    quantile_5 = _clamp(raw_q5, -MAX_QUANTILE_RANGE_PCT, MAX_QUANTILE_RANGE_PCT)
-    quantile_50 = _clamp(raw_q50, -MAX_DAILY_RETURN_PCT, MAX_DAILY_RETURN_PCT)
-    quantile_95 = _clamp(raw_q95, -MAX_QUANTILE_RANGE_PCT, MAX_QUANTILE_RANGE_PCT)
-
-    # Ensure quantile ordering: q5 <= q50 <= q95
-    quantile_5 = min(quantile_5, quantile_50)
-    quantile_95 = max(quantile_95, quantile_50)
-
-    # ── Derived values ──
-    predicted_open = latest_price * (1 + point_pred / 100)
-
-    # Direction from probabilities
-    direction_probs = output["direction_probs"][0].numpy()
-    direction_idx = np.argmax(direction_probs)
-    direction = ["down", "neutral", "up"][direction_idx]
-    direction_prob = float(direction_probs[direction_idx])
-
-    # Trend & signal
-    trend = _classify_trend(point_pred)
-    signal = _classify_signal(point_pred)
-
-    # Confidence
+    # 1d Base outputs
+    point_pred = horizon_1d["point"]
+    uncertainty = horizon_1d["uncertainty"]
+    
+    # Derived values mapped back to legacy predictions
+    predicted_open = latest_price * (1 + point_pred)
+    
+    direction = "up" if horizon_1d["direction"] == "UP" else "down"
+    # Basic direction probability mapped from uncertainty
+    direction_prob = 1.0 - min(uncertainty * 10, 0.5)
+    
+    trend = _classify_trend(point_pred * 100)
+    signal = _classify_signal(point_pred * 100)
     confidence_score, confidence_level = _compute_confidence(uncertainty, direction_prob)
-
-    # ── XAI explanations ──
-    xai_data = _explainer.explain(price_tensor, sentiment_tensor, technical_tensor)
 
     # ── Create prediction record ──
     prediction = Prediction(
@@ -244,10 +171,23 @@ async def get_prediction(
         prediction_date=prediction_date,
         target_date=target_date,
         predicted_open=round(predicted_open, 2),
-        predicted_change_pct=round(point_pred, 4),
-        quantile_5=round(latest_price * (1 + quantile_5 / 100), 2),
-        quantile_50=round(latest_price * (1 + quantile_50 / 100), 2),
-        quantile_95=round(latest_price * (1 + quantile_95 / 100), 2),
+        predicted_change_pct=round(point_pred * 100, 4), # standard legacy map
+        
+        horizon_1d_point=round(horizon_1d["point"] * 100, 4),
+        horizon_1d_interval=horizon_1d["interval"],
+        horizon_5d_point=round(horizon_5d["point"] * 100, 4),
+        horizon_5d_interval=horizon_5d["interval"],
+        horizon_20d_point=round(horizon_20d["point"] * 100, 4),
+        horizon_20d_interval=horizon_20d["interval"],
+        horizon_60d_point=round(horizon_60d["point"] * 100, 4),
+        horizon_60d_interval=horizon_60d["interval"],
+        
+        volatility_forecast=round(result_dict["vol_fcast"], 4),
+        crash_probability=round(result_dict["crash_prob"], 4),
+        
+        market_regime=result_dict["regime"],
+        regime_probabilities=result_dict["regime_p"],
+
         uncertainty_score=round(uncertainty, 4),
         confidence_level=confidence_level,
         confidence_score=round(confidence_score, 4),
@@ -255,15 +195,15 @@ async def get_prediction(
         direction_probability=round(direction_prob, 4),
         trend=trend,
         signal=signal,
-        shap_values=xai_data["shap_values"],
-        modality_weights=xai_data["modality_weights"],
-        top_features=xai_data["top_features"],
+        
+        # Disable XAI temporarily for production speed
+        shap_values=None,
+        modality_weights=None,
+        top_features=None,
+        
         input_features={
-            "price_shape": list(price_data.shape),
             "latest_close": latest_price,
-            "sentiment": sentiment_data.tolist(),
-            "raw_point_pred": raw_point,
-            "clamped_point_pred": point_pred,
+            "acmi_point_pred": point_pred,
         },
     )
 

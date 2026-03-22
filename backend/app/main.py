@@ -11,6 +11,13 @@ from app.config import settings
 from app.core.database import init_db, close_db
 from app.api.v1 import auth, stocks, predictions, users, websocket, news, model_info
 from app.services.scheduler import start_scheduler, stop_scheduler
+import sys
+import io
+
+# Force UTF-8 on Windows for emoji prints
+if sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 
 @asynccontextmanager

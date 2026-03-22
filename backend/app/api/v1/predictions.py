@@ -47,8 +47,15 @@ async def get_latest_prediction(
             "is_pending": True,
             "created_at": datetime.now().isoformat()
         }
-    
-    return prediction
+
+    # Enrich response with generated explanation text
+    prediction_dict = {
+        col.name: getattr(prediction, col.name)
+        for col in prediction.__table__.columns
+    }
+    prediction_dict["explanation_text"] = generate_explanation_text(prediction)
+
+    return prediction_dict
 
 
 @router.get("/history", response_model=List[PredictionResponse])

@@ -21,15 +21,28 @@ class Prediction(Base):
     
     # Predictions
     predicted_open = Column(Float, nullable=False)
-    predicted_change_pct = Column(Float, nullable=False)  # % change from current
+    predicted_change_pct = Column(Float, nullable=False)  # mapped to 1d point pred for legacy support
     
-    # Quantiles for uncertainty
-    quantile_5 = Column(Float, nullable=True)  # 5th percentile
-    quantile_50 = Column(Float, nullable=True)  # Median
-    quantile_95 = Column(Float, nullable=True)  # 95th percentile
+    # ACMI++ Multi-Horizon outputs
+    horizon_1d_point = Column(Float, nullable=True)
+    horizon_1d_interval = Column(JSON, nullable=True) # [lower, upper]
+    horizon_5d_point = Column(Float, nullable=True)
+    horizon_5d_interval = Column(JSON, nullable=True)
+    horizon_20d_point = Column(Float, nullable=True)
+    horizon_20d_interval = Column(JSON, nullable=True)
+    horizon_60d_point = Column(Float, nullable=True)
+    horizon_60d_interval = Column(JSON, nullable=True)
+
+    # Risk Metrics
+    volatility_forecast = Column(Float, nullable=True)
+    crash_probability = Column(Float, nullable=True)
+
+    # Market Regime
+    market_regime = Column(Text, nullable=True)
+    regime_probabilities = Column(JSON, nullable=True)
     
-    # Confidence
-    uncertainty_score = Column(Float, nullable=True)  # 0-1
+    # Confidence (Legacy fields mapped from uncertainty)
+    uncertainty_score = Column(Float, nullable=True)  # mapped to 1d uncertainty
     confidence_level = Column(Text, nullable=True)  # low/medium/high
     
     # Direction
@@ -59,7 +72,7 @@ class Prediction(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f"<Prediction {self.target_date} -> {self.predicted_open}>"
+        return f"<Prediction {self.target_date} -> 1d: {self.horizon_1d_point}>"
 
 
 class PredictionAccuracy(Base):
