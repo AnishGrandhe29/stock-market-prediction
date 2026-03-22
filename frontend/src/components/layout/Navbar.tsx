@@ -111,7 +111,7 @@ export function Navbar() {
                         <TrendingUp className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold gradient-text">NIFTY 50 Predictor</h1>
+                        <h1 className="text-lg font-bold gradient-text">NIFTY 50 Index Predictor</h1>
                         <p className="text-xs text-surface-500">AI-Powered Predictions</p>
                     </div>
                 </Link>

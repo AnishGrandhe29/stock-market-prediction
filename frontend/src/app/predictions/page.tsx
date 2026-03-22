@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { predictionsAPI, stocksAPI } from '@/lib/api';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
+import { PredictionExplanation } from '@/components/predictions/PredictionExplanation';
 
 export default function PredictionsPage() {
     const [currentDate, setCurrentDate] = useState<string>('');
@@ -52,6 +53,16 @@ export default function PredictionsPage() {
     const accuracyData = accuracy?.data;
     const currentPrice = priceData?.data?.price;
 
+    // Fetch XAI explanation — only when a real prediction ID exists
+    const predictionId = prediction?.id ?? null;
+    const { data: xaiResponse, isLoading: xaiLoading } = useQuery({
+        queryKey: ['prediction-xai', predictionId],
+        queryFn: () => predictionsAPI.getXAI(predictionId!),
+        enabled: !!predictionId,
+        staleTime: Infinity,
+    });
+    const xaiData = xaiResponse?.data ?? null;
+
     // Calculate actual direction by comparing predicted_open to current price
     const predictedOpen = prediction?.predicted_open ?? 0;
     const actualChangePct = currentPrice && currentPrice > 0
@@ -80,10 +91,10 @@ export default function PredictionsPage() {
                         AI-powered predictions with historical accuracy tracking
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/30 rounded-lg">
                     <Brain className="w-5 h-5 text-primary-500" />
-                    <span className="text-sm text-surface-500">
-                        Multimodal TCN + BERT
+                    <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                        NIFTY50-Multimodal-TCN
                     </span>
                 </div>
             </div>
@@ -178,7 +189,7 @@ export default function PredictionsPage() {
                     <div className="skeleton h-32 w-full" />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Direction - Based on comparison to current price */}
+                        {/* Direction */}
                         <div className="text-center p-4 bg-surface-50 dark:bg-surface-700/50 rounded-xl">
                             <p className="text-sm text-surface-500 mb-2">Predicted Direction</p>
                             <div className={`inline-flex items-center gap-2 text-2xl font-bold ${isActuallyUp
@@ -194,7 +205,7 @@ export default function PredictionsPage() {
                             </div>
                         </div>
 
-                        {/* Expected Change - From current price */}
+                        {/* Expected Change */}
                         <div className="text-center p-4 bg-surface-50 dark:bg-surface-700/50 rounded-xl">
                             <p className="text-sm text-surface-500 mb-2">Expected Change</p>
                             <div className={`text-2xl font-bold ${actualChangePct >= 0
@@ -214,7 +225,7 @@ export default function PredictionsPage() {
                             </div>
                             <div className="mt-2 h-2 bg-surface-200 dark:bg-surface-600 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-primary-500 rounded-full"
+                                    className="h-full bg-primary-500 rounded-full transition-all duration-700"
                                     style={{ width: `${(prediction?.confidence_score || 0.72) * 100}%` }}
                                 />
                             </div>
@@ -222,6 +233,14 @@ export default function PredictionsPage() {
                     </div>
                 )}
             </div>
+
+            {/* ── Why This Prediction? Explanation Panel ─────────────── */}
+            <PredictionExplanation
+                prediction={prediction}
+                xaiData={xaiData}
+                isLoading={latestLoading || xaiLoading}
+                changePct={actualChangePct}
+            />
 
             {/* Prediction History Table */}
             <div className="card p-6">
@@ -250,7 +269,7 @@ export default function PredictionsPage() {
                             {displayHistory.map((item: any, index: number) => (
                                 <tr
                                     key={item.id || index}
-                                    className="border-b border-surface-100 dark:border-surface-700/50 hover:bg-surface-50 dark:hover:bg-surface-700/30"
+                                    className="border-b border-surface-100 dark:border-surface-700/50 hover:bg-surface-50 dark:hover:bg-surface-700/30 transition-colors"
                                 >
                                     <td className="py-3 px-4 text-sm text-surface-900 dark:text-white">
                                         {item.prediction_date || currentDate}

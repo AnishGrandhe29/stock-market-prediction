@@ -1,0 +1,37 @@
+
+> nifty50-predictor@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+Failed to compile.
+
+./node_modules/next/dist/pages/_app.js
+Error: unknown field `hashSalt`, expected `isReactServerLayer` or `enabled` at line 1 column 1159
+
+./node_modules/next/dist/pages/_document.js
+Error: unknown field `hashSalt`, expected `isReactServerLayer` or `enabled` at line 1 column 1159
+
+./node_modules/next/dist/pages/_error.js
+Error: unknown field `hashSalt`, expected `isReactServerLayer` or `enabled` at line 1 column 1159
+
+Import trace for requested module:
+./node_modules/next/dist/pages/_error.js
+
+./node_modules/next/dist/client/components/app-router.js
+Error: unknown field `hashSalt`, expected `isReactServerLayer` or `enabled` at line 1 column 1118
+
+Import trace for requested module:
+./node_modules/next/dist/client/components/app-router.js
+./node_modules/next/dist/server/app-render/entry-base.js
+
+./node_modules/next/dist/client/components/client-page.js
+Error: unknown field `hashSalt`, expected `isReactServerLayer` or `enabled` at line 1 column 1118
+
+Import trace for requested module:
+./node_modules/next/dist/client/components/client-page.js
+./node_modules/next/dist/server/app-render/entry-base.js
+
+
+> Build failed because of webpack errors

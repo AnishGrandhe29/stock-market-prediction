@@ -38,7 +38,7 @@ export default function ModelInfoPage() {
                         Model Architecture
                     </h1>
                     <p className="text-surface-500 mt-1">
-                        Deep dive into the multimodal prediction system
+                        NIFTY50-Multimodal-TCN — Multimodal fusion with Adaptive Gating
                     </p>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">

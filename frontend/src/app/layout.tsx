@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-    title: 'NIFTY 50 Predictor - AI-Powered Market Predictions',
+    title: 'NIFTY 50 Index Predictor - AI-Powered Market Predictions',
     description: 'Multimodal deep learning predictions for NIFTY 50 Index with Explainable AI',
     keywords: ['NIFTY 50', 'stock prediction', 'AI', 'machine learning', 'XAI'],
 };

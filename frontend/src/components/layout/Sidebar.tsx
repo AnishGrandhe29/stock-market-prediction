@@ -114,20 +114,7 @@ export function Sidebar() {
                 }
             </nav>
 
-            {/* Model Info Card */}
-            <div className="mt-6 p-4 rounded-xl bg-gradient-to-br from-primary-500/10 to-primary-700/10 border border-primary-200 dark:border-primary-800" >
-                <div className="flex items-center gap-2 mb-2" >
-                    <Brain className="w-5 h-5 text-primary-500" />
-                    <span className="font-medium text-primary-700 dark:text-primary-300" > Model Status </span>
-                </div>
-                < p className="text-sm text-surface-600 dark:text-surface-400" >
-                    Multimodal TCN - BERT
-                </p>
-                < div className="mt-2 flex items-center gap-2" >
-                    <span className="w-2 h-2 bg-success-500 rounded-full" />
-                    <span className="text-xs text-success-600 dark:text-success-400" > Online </span>
-                </div>
-            </div>
+
         </aside>
     );
 }
