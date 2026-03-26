@@ -12,8 +12,8 @@ import {
     FileText,
     HelpCircle,
     Cpu,
+    TrendingUp,
 } from 'lucide-react';
-import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import clsx from 'clsx';
 
 const menuItems = [
@@ -21,57 +21,48 @@ const menuItems = [
         label: 'Dashboard',
         href: '/',
         icon: LayoutDashboard,
-        tooltip: 'Overview of NIFTY 50 with latest predictions and market status',
     },
     {
         label: 'Live Chart',
         href: '/chart',
         icon: LineChart,
-        tooltip: 'Real-time candlestick chart with technical indicators',
     },
     {
         label: 'Predictions',
         href: '/predictions',
         icon: Brain,
-        tooltip: 'AI predictions with confidence levels and historical accuracy',
     },
     {
         label: 'XAI Insights',
         href: '/xai',
         icon: HelpCircle,
-        tooltip: 'Explainable AI - understand why the model made its predictions',
     },
     {
         label: 'Model Info',
         href: '/model',
         icon: Cpu,
-        tooltip: 'Explore the model architecture, training details, and novelty points',
     },
     { divider: true },
     {
         label: 'Watchlist',
         href: '/watchlist',
         icon: Star,
-        tooltip: 'Track your favorite stocks and set price alerts',
     },
     {
         label: 'Notes',
         href: '/notes',
         icon: FileText,
-        tooltip: 'Personal notes and trading journal',
     },
     {
         label: 'Alerts',
         href: '/alerts',
         icon: Bell,
-        tooltip: 'Configure price and prediction alerts',
     },
     { divider: true },
     {
-        label: 'Documentation',
+        label: 'Docs',
         href: '/docs',
         icon: BookOpen,
-        tooltip: 'Learn about the model, features, and how to use the platform',
     },
 ];
 
@@ -79,42 +70,82 @@ export function Sidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-surface-800 border-r border-surface-200 dark:border-surface-700 p-4 overflow-y-auto" >
-            <nav className="space-y-1" >
-                {
-                    menuItems.map((item, index) => {
-                        if ('divider' in item) {
-                            return <hr key={index} className="my-4 border-surface-200 dark:border-surface-700" />;
-                        }
+        <aside
+            className="fixed left-0 top-16 bottom-0 w-60 overflow-y-auto flex flex-col"
+            style={{
+                background: 'var(--surface-low)',
+                borderRight: '1px solid var(--border-ghost)',
+            }}
+        >
+            {/* Branding accent */}
+            <div className="px-4 pt-5 pb-3">
+                <div
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                    style={{
+                        background: 'rgba(192,193,255,0.07)',
+                        border: '1px solid rgba(192,193,255,0.14)',
+                    }}
+                >
+                    <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
+                    <div>
+                        <p className="text-xs font-bold gradient-text">NIFTY 50 AI</p>
+                        <p className="label-upper" style={{ fontSize: '0.55rem' }}>Prediction System</p>
+                    </div>
+                    {/* Live pulse dot */}
+                    <span className="ml-auto pulse-indigo" />
+                </div>
+            </div>
 
-                        const Icon = item.icon;
-                        const isActive = pathname === item.href;
-
+            {/* Navigation */}
+            <nav className="flex-1 px-3 pb-6 space-y-0.5">
+                {menuItems.map((item, index) => {
+                    if ('divider' in item) {
                         return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={
-                                    clsx(
-                                        'flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200',
-                                        isActive
-                                            ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium'
-                                            : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-700'
-                                    )
-                                }
-                            >
-                                <div className="flex items-center gap-3" >
-                                    <Icon className="w-5 h-5" />
-                                    <span>{item.label} </span>
-                                </div>
-                                < InfoTooltip title={item.label} content={item.tooltip} />
-                            </Link>
+                            <div
+                                key={index}
+                                className="my-3 mx-2"
+                                style={{ height: '1px', background: 'var(--border-faint)' }}
+                            />
                         );
-                    })
-                }
+                    }
+
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href;
+
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={clsx(
+                                'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group',
+                                isActive ? 'nav-item-active' : 'nav-item'
+                            )}
+                        >
+                            <Icon
+                                className="w-4 h-4 flex-shrink-0 transition-colors"
+                                style={{
+                                    color: isActive ? 'var(--color-primary)' : undefined,
+                                }}
+                            />
+                            <span className="text-sm font-medium">{item.label}</span>
+                            {isActive && (
+                                <span
+                                    className="ml-auto w-1.5 h-1.5 rounded-full"
+                                    style={{ background: 'var(--color-primary)' }}
+                                />
+                            )}
+                        </Link>
+                    );
+                })}
             </nav>
 
-
+            {/* Footer */}
+            <div
+                className="px-4 py-4"
+                style={{ borderTop: '1px solid var(--border-ghost)' }}
+            >
+                <p className="label-upper text-center">ACMI++ v2.1.0 · Live</p>
+            </div>
         </aside>
     );
 }

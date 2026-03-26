@@ -1,161 +1,140 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    TrendingUp,
-    Bell,
-    User,
-    Moon,
-    Sun,
-    LogOut,
-    Settings,
-    ChevronDown
+    TrendingUp, Bell, LogOut, Settings,
+    ChevronDown, Zap, Sun, Moon
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { InfoTooltip } from '@/components/ui/InfoTooltip';
-import { isNSETradingDay, isNSEHoliday } from '@/lib/tradingDays';
+import { isNSEHoliday } from '@/lib/tradingDays';
 
-// Check if market is currently open (during trading hours on a trading day)
 function getMarketStatus(): { isOpen: boolean; message: string } {
     const now = new Date();
-    const day = now.getDay(); // 0 = Sunday, 6 = Saturday
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const currentTime = hours * 60 + minutes; // Convert to minutes since midnight
-
-    // NSE trading hours: 9:15 AM - 3:30 PM IST
-    const marketOpen = 9 * 60 + 15;  // 9:15 AM = 555 minutes
-    const marketClose = 15 * 60 + 30; // 3:30 PM = 930 minutes
-
-    // Check if it's a weekend
-    if (day === 0 || day === 6) {
-        return {
-            isOpen: false,
-            message: day === 0 ? 'Closed (Sunday)' : 'Closed (Saturday)'
-        };
-    }
-
-    // Check if it's a holiday
-    if (isNSEHoliday(now)) {
-        return {
-            isOpen: false,
-            message: 'Closed (Holiday)'
-        };
-    }
-
-    // Check trading hours
-    if (currentTime < marketOpen) {
-        return {
-            isOpen: false,
-            message: 'Pre-Market'
-        };
-    }
-
-    if (currentTime > marketClose) {
-        return {
-            isOpen: false,
-            message: 'After Hours'
-        };
-    }
-
-    // Market is open
-    return {
-        isOpen: true,
-        message: 'Market Open'
-    };
+    const day = now.getDay();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    if (day === 0 || day === 6) return { isOpen: false, message: day === 0 ? 'Closed (Sun)' : 'Closed (Sat)' };
+    if (isNSEHoliday(now)) return { isOpen: false, message: 'Market Holiday' };
+    if (mins < 555) return { isOpen: false, message: 'Pre-Market' };
+    if (mins > 930) return { isOpen: false, message: 'After Hours' };
+    return { isOpen: true, message: 'Market Open' };
 }
 
 export function Navbar() {
-    const [isDark, setIsDark] = useState(false);
+    const [isDark, setIsDark] = useState(true);
     const [showUserMenu, setShowUserMenu] = useState(false);
-    const [marketStatus, setMarketStatus] = useState({ isOpen: false, message: 'Loading...' });
+    const [marketStatus, setMarketStatus] = useState({ isOpen: false, message: '...' });
     const { user, isAuthenticated, logout } = useAuthStore();
 
-    // Update market status every minute
     useEffect(() => {
-        const updateStatus = () => {
-            setMarketStatus(getMarketStatus());
-        };
-
-        updateStatus(); // Initial update
-        const interval = setInterval(updateStatus, 60000); // Update every minute
-
-        return () => clearInterval(interval);
+        const update = () => setMarketStatus(getMarketStatus());
+        update();
+        const i = setInterval(update, 60000);
+        return () => clearInterval(i);
     }, []);
 
-    // Initialize theme
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const savedTheme = localStorage.getItem('theme');
-            const isDarkMode = savedTheme === 'dark' ||
-                (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            setIsDark(isDarkMode);
-            document.documentElement.classList.toggle('dark', isDarkMode);
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            setIsDark(true);
         }
     }, []);
 
     const toggleTheme = () => {
-        const newTheme = !isDark;
-        setIsDark(newTheme);
-        document.documentElement.classList.toggle('dark', newTheme);
-        localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+        const next = !isDark;
+        setIsDark(next);
+        document.documentElement.classList.toggle('dark', next);
+        localStorage.setItem('theme', next ? 'dark' : 'light');
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-white dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700 px-6">
-            <div className="flex items-center justify-between h-full">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-white" />
+        <nav
+            className="fixed top-0 left-0 right-0 z-50 h-16 glass"
+            style={{ borderBottom: '1px solid var(--border-ghost)' }}
+        >
+            <div className="flex items-center justify-between h-full px-6">
+
+                {/* ── Logo ── */}
+                <Link href="/" className="flex items-center gap-3 min-w-[200px]">
+                    <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{
+                            background: 'linear-gradient(135deg, var(--color-primary-dim) 0%, var(--color-primary-container) 100%)',
+                            boxShadow: '0 0 18px rgba(192,193,255,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+                        }}
+                    >
+                        <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold gradient-text">NIFTY 50 Index Predictor</h1>
-                        <p className="text-xs text-surface-500">AI-Powered Predictions</p>
+                        <p className="text-base font-bold gradient-text leading-tight">NIFTY AI</p>
+                        <p className="label-upper" style={{ fontSize: '0.58rem' }}>Prediction System</p>
                     </div>
                 </Link>
 
-                {/* Right side */}
-                <div className="flex items-center gap-4">
-                    {/* Market Status */}
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${marketStatus.isOpen
-                            ? 'bg-success-100 dark:bg-success-900/30'
-                            : 'bg-surface-100 dark:bg-surface-700'
-                        }`}>
-                        <span className={`w-2 h-2 rounded-full ${marketStatus.isOpen
-                                ? 'bg-success-500 animate-pulse'
-                                : 'bg-surface-400'
-                            }`} />
-                        <span className={`text-sm font-medium ${marketStatus.isOpen
-                                ? 'text-success-700 dark:text-success-400'
-                                : 'text-surface-600 dark:text-surface-300'
-                            }`}>
-                            {marketStatus.message}
-                        </span>
-                        <InfoTooltip
-                            title="Market Status"
-                            content="NSE trading hours: 9:15 AM - 3:30 PM IST, Monday to Friday (excluding holidays)"
-                        />
+                {/* ── Center: GIFT NIFTY Signal ── */}
+                <div
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                    style={{
+                        background: 'rgba(245,158,11,0.10)',
+                        border: '1px solid rgba(245,158,11,0.22)',
+                        boxShadow: '0 0 14px rgba(245,158,11,0.10)',
+                    }}
+                >
+                    <Zap className="w-4 h-4" style={{ color: 'var(--color-amber)' }} />
+                    <span className="text-sm font-bold" style={{ color: 'var(--color-amber)' }}>
+                        GIFT NIFTY
+                    </span>
+                    <span className="badge badge-amber">Signal Active</span>
+                </div>
+
+                {/* ── Right Controls ── */}
+                <div className="flex items-center gap-2">
+
+                    {/* Market Status Pill */}
+                    <div
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold"
+                        style={{
+                            background: marketStatus.isOpen
+                                ? 'rgba(78,222,163,0.10)'
+                                : 'rgba(145,143,154,0.10)',
+                            color: marketStatus.isOpen ? 'var(--color-emerald)' : 'var(--text-muted)',
+                            border: `1px solid ${marketStatus.isOpen
+                                ? 'rgba(78,222,163,0.25)'
+                                : 'rgba(145,143,154,0.18)'}`,
+                        }}
+                    >
+                        {marketStatus.isOpen
+                            ? <span className="pulse-green" />
+                            : <span className="w-2 h-2 rounded-full inline-block" style={{ background: 'var(--outline-color)' }} />
+                        }
+                        <span style={{ fontSize: '0.8rem' }}>{marketStatus.message}</span>
                     </div>
 
                     {/* Notifications */}
-                    <button className="relative p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
-                        <Bell className="w-5 h-5 text-surface-600 dark:text-surface-300" />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-danger-500 rounded-full" />
+                    <button
+                        className="relative p-2 rounded-lg btn-ghost"
+                        style={{ border: 'none', padding: '8px' }}
+                        aria-label="Notifications"
+                    >
+                        <Bell className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                        <span
+                            className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
+                            style={{ background: 'var(--color-rose)' }}
+                        />
                     </button>
 
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+                        className="p-2 rounded-lg btn-ghost"
+                        style={{ border: 'none', padding: '8px' }}
                         aria-label="Toggle theme"
                     >
-                        {isDark ? (
-                            <Sun className="w-5 h-5 text-surface-600 dark:text-surface-300" />
-                        ) : (
-                            <Moon className="w-5 h-5 text-surface-600 dark:text-surface-300" />
-                        )}
+                        {isDark
+                            ? <Sun className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                            : <Moon className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                        }
                     </button>
 
                     {/* User Menu */}
@@ -163,58 +142,57 @@ export function Navbar() {
                         <div className="relative">
                             <button
                                 onClick={() => setShowUserMenu(!showUserMenu)}
-                                className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg btn-ghost"
+                                style={{ border: 'none' }}
                             >
                                 {user?.avatar_url ? (
-                                    <img
-                                        src={user.avatar_url}
-                                        alt="Profile"
-                                        className="w-8 h-8 rounded-full object-cover"
-                                    />
+                                    <img src={user.avatar_url} alt="Profile"
+                                        className="w-7 h-7 rounded-full object-cover" />
                                 ) : (
-                                    <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">
-                                        {user?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+                                    <div
+                                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                                        style={{
+                                            background: 'linear-gradient(135deg, var(--color-primary-dim), var(--color-primary-container))',
+                                            color: 'var(--color-on-primary)',
+                                        }}
+                                    >
+                                        {user?.full_name?.charAt(0).toUpperCase()
+                                            || user?.email?.charAt(0).toUpperCase()
+                                            || 'U'}
                                     </div>
                                 )}
-                                <ChevronDown className="w-4 h-4 text-surface-500" />
+                                <ChevronDown className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
                             </button>
 
                             {showUserMenu && (
-                                <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-surface-800 rounded-xl shadow-lg border border-surface-200 dark:border-surface-700">
-                                    <div className="px-4 py-2 border-b border-surface-200 dark:border-surface-700">
-                                        <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
+                                <div
+                                    className="absolute right-0 mt-2 w-52 py-2 rounded-xl glass-ai"
+                                    style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+                                >
+                                    <div className="px-4 py-2 mb-1" style={{ borderBottom: '1px solid var(--border-ghost)' }}>
+                                        <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                                             {user?.full_name || 'User'}
                                         </p>
-                                        <p className="text-xs text-surface-500 truncate">
-                                            {user?.email}
-                                        </p>
+                                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
                                     </div>
-                                    <Link
-                                        href="/settings"
-                                        className="flex items-center gap-2 px-4 py-2 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+                                    <Link href="/settings"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm nav-item rounded-none"
                                         onClick={() => setShowUserMenu(false)}
                                     >
-                                        <Settings className="w-4 h-4" />
-                                        Settings
+                                        <Settings className="w-4 h-4" /> Settings
                                     </Link>
                                     <button
-                                        onClick={() => {
-                                            logout();
-                                            setShowUserMenu(false);
-                                        }}
-                                        className="flex items-center gap-2 px-4 py-2 w-full text-left text-danger-500 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+                                        onClick={() => { logout(); setShowUserMenu(false); }}
+                                        className="flex items-center gap-2 px-4 py-2 w-full text-left text-sm transition-colors"
+                                        style={{ color: 'var(--color-rose)' }}
                                     >
-                                        <LogOut className="w-4 h-4" />
-                                        Logout
+                                        <LogOut className="w-4 h-4" /> Logout
                                     </button>
                                 </div>
                             )}
                         </div>
                     ) : (
-                        <Link
-                            href="/auth/login"
-                            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium"
-                        >
+                        <Link href="/auth/login" className="btn-primary text-sm">
                             Sign In
                         </Link>
                     )}
