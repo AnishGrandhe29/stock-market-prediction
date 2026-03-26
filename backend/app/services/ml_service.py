@@ -106,7 +106,8 @@ def _compute_confidence(uncertainty: float, direction_prob: float) -> tuple:
 async def get_prediction(
     symbol: str,
     target_date: Optional[date],
-    db: AsyncSession
+    db: AsyncSession,
+    use_gift: bool = True,
 ) -> Prediction:
     """
     Generate a prediction for the given symbol.
@@ -118,6 +119,12 @@ async def get_prediction(
       4. Classify trend & signal
       5. Compute confidence from uncertainty + direction probability
       6. Persist and return
+
+    Parameters
+    ----------
+    use_gift : If True (default), inject GIFT NIFTY overnight features into
+               the model's overnight encoder.  Set False for ablation studies
+               or when GIFT data is unavailable.
     """
     # Load model
     model = load_model()
@@ -138,24 +145,30 @@ async def get_prediction(
 
     # ── Run inference using ACMIPredictor ──
     try:
-        # ACMIPredictor handles internal historical features download and engineering
-        result_dict = model.predict(symbol)
+        # ACMIPredictor handles internal historical feature download and engineering.
+        # use_gift=True injects the GIFT NIFTY overnight signal.
+        result_dict = model.predict(symbol, use_gift=use_gift)
     except Exception as e:
         print(f"Error in ACMIPredictor for {symbol}: {e}")
         raise ValueError(f"Could not generate prediction: {e}")
 
     latest_price = result_dict.get("latest_price", 1.0)
-    horizon_1d = result_dict["horizons"]["1d"]
-    horizon_5d = result_dict["horizons"]["5d"]
-    horizon_20d = result_dict["horizons"]["20d"]
-    horizon_60d = result_dict["horizons"]["60d"]
+    horizon_1d   = result_dict["horizons"]["1d"]
+    horizon_5d   = result_dict["horizons"]["5d"]
+    horizon_20d  = result_dict["horizons"]["20d"]
+    horizon_60d  = result_dict["horizons"]["60d"]
 
     # 1d Base outputs
-    point_pred = horizon_1d["point"]
+    point_pred  = horizon_1d["point"]
     uncertainty = horizon_1d["uncertainty"]
-    
-    # Derived values mapped back to legacy predictions
-    predicted_open = latest_price * (1 + point_pred)
+
+    # ── Gap-based open prediction (NEW) ──
+    # If the model ran the gap_head successfully, use that directly.
+    # Otherwise fall back to the legacy return-based formula.
+    gap_pred       = result_dict.get("gap_pred", None)
+    predicted_open = result_dict.get("predicted_open", None)
+    if predicted_open is None:
+        predicted_open = latest_price * (1 + point_pred)
     
     direction = "up" if horizon_1d["direction"] == "UP" else "down"
     # Basic direction probability mapped from uncertainty
@@ -171,8 +184,8 @@ async def get_prediction(
         prediction_date=prediction_date,
         target_date=target_date,
         predicted_open=round(predicted_open, 2),
-        predicted_change_pct=round(point_pred * 100, 4), # standard legacy map
-        
+        predicted_change_pct=round(point_pred * 100, 4),
+
         horizon_1d_point=round(horizon_1d["point"] * 100, 4),
         horizon_1d_interval=horizon_1d["interval"],
         horizon_5d_point=round(horizon_5d["point"] * 100, 4),
@@ -181,10 +194,10 @@ async def get_prediction(
         horizon_20d_interval=horizon_20d["interval"],
         horizon_60d_point=round(horizon_60d["point"] * 100, 4),
         horizon_60d_interval=horizon_60d["interval"],
-        
+
         volatility_forecast=round(result_dict["vol_fcast"], 4),
         crash_probability=round(result_dict["crash_prob"], 4),
-        
+
         market_regime=result_dict["regime"],
         regime_probabilities=result_dict["regime_p"],
 
@@ -195,15 +208,19 @@ async def get_prediction(
         direction_probability=round(direction_prob, 4),
         trend=trend,
         signal=signal,
-        
+
         # Disable XAI temporarily for production speed
         shap_values=None,
         modality_weights=None,
         top_features=None,
-        
+
         input_features={
-            "latest_close": latest_price,
-            "acmi_point_pred": point_pred,
+            "latest_close"       : latest_price,
+            "acmi_point_pred"    : point_pred,
+            # NEW: expose GIFT NIFTY context in input features
+            "gap_pred_pts"       : round(gap_pred, 2) if gap_pred is not None else None,
+            "gap_pred_pct"       : round(result_dict.get("gap_pred_pct", 0.0) * 100, 4),
+            "gift_features"      : result_dict.get("gift_features"),
         },
     )
 

@@ -5,12 +5,12 @@ import { Providers } from '@/components/Providers';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-    title: 'NIFTY 50 Index Predictor - AI-Powered Market Predictions',
-    description: 'Multimodal deep learning predictions for NIFTY 50 Index with Explainable AI',
-    keywords: ['NIFTY 50', 'stock prediction', 'AI', 'machine learning', 'XAI'],
+    title: 'NIFTY AI — ACMI++ Prediction System',
+    description: 'ACMI++ multimodal deep learning predictions for NIFTY 50 with Explainable AI and GIFT NIFTY integration',
+    keywords: ['NIFTY 50', 'GIFT NIFTY', 'stock prediction', 'AI', 'ACMI++', 'XAI'],
 };
 
 export default function RootLayout({
@@ -19,20 +19,25 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang= "en" suppressHydrationWarning >
-            <body className={ inter.className }>
+        <html lang="en" suppressHydrationWarning>
+            <body className={inter.className} style={{ background: 'var(--surface-base)' }}>
                 <Providers>
-                <div className="min-h-screen bg-surface-50 dark:bg-surface-900" >
-                    <Navbar />
-                    < div className = "flex" >
-                        <Sidebar />
-                        < main className = "flex-1 ml-64 pt-16 p-6" >
-                            { children }
+                    <div className="min-h-screen" style={{ background: 'var(--surface-base)' }}>
+                        <Navbar />
+                        <div className="flex">
+                            <Sidebar />
+                            <main
+                                className="flex-1 ml-60 pt-16 min-h-screen"
+                                style={{ background: 'var(--surface-base)' }}
+                            >
+                                <div className="p-6 max-w-screen-2xl mx-auto">
+                                    {children}
+                                </div>
                             </main>
-                            </div>
-                            </div>
-                            </Providers>
-                            </body>
-                            </html>
-  );
+                        </div>
+                    </div>
+                </Providers>
+            </body>
+        </html>
+    );
 }

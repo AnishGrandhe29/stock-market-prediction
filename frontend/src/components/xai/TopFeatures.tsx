@@ -13,96 +13,112 @@ interface TopFeaturesProps {
     features?: Feature[];
 }
 
-// Color schemes for different modalities
-const modalityColors: Record<string, { bg: string; text: string; bar: string }> = {
-    Technical: {
-        bg: 'bg-blue-100 dark:bg-blue-900/40',
-        text: 'text-blue-700 dark:text-blue-300',
-        bar: 'bg-gradient-to-r from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-400'
-    },
-    Sentiment: {
-        bg: 'bg-purple-100 dark:bg-purple-900/40',
-        text: 'text-purple-700 dark:text-purple-300',
-        bar: 'bg-gradient-to-r from-purple-400 to-purple-600 dark:from-purple-500 dark:to-purple-400'
-    },
-    Price: {
-        bg: 'bg-amber-100 dark:bg-amber-900/40',
-        text: 'text-amber-700 dark:text-amber-300',
-        bar: 'bg-gradient-to-r from-amber-400 to-amber-600 dark:from-amber-500 dark:to-amber-400'
-    }
+// Modality accent colors (Stitch design tokens)
+const modalityAccent: Record<string, string> = {
+    Technical:  'var(--color-primary)',
+    Sentiment:  'var(--color-amber)',
+    Price:      'var(--color-emerald)',
+};
+
+const modalityBadge: Record<string, { bg: string; color: string }> = {
+    Technical: { bg: 'rgba(192,193,255,0.12)', color: 'var(--color-primary)' },
+    Sentiment: { bg: 'rgba(251,191,36,0.12)',  color: 'var(--color-amber)' },
+    Price:     { bg: 'rgba(78,222,163,0.12)',  color: 'var(--color-emerald)' },
 };
 
 export function TopFeatures({ features }: TopFeaturesProps) {
     const defaultFeatures: Feature[] = [
-        { feature: 'RSI_14', importance: 0.18, direction: 'positive', modality: 'Technical' },
-        { feature: 'News Sentiment', importance: 0.15, direction: 'positive', modality: 'Sentiment' },
-        { feature: 'EMA_20 Trend', importance: 0.12, direction: 'positive', modality: 'Technical' },
-        { feature: 'MACD Histogram', importance: 0.10, direction: 'negative', modality: 'Technical' },
-        { feature: 'Price Momentum', importance: 0.09, direction: 'positive', modality: 'Price' },
-        { feature: 'Volume Surge', importance: 0.08, direction: 'positive', modality: 'Price' },
-        { feature: 'ATR Volatility', importance: 0.07, direction: 'negative', modality: 'Technical' },
-        { feature: 'Reddit Sentiment', importance: 0.06, direction: 'positive', modality: 'Sentiment' },
+        { feature: 'RSI (14)',         importance: 0.042, direction: 'positive', modality: 'Technical' },
+        { feature: 'MACD Signal',      importance: 0.038, direction: 'positive', modality: 'Technical' },
+        { feature: 'GIFT NIFTY Spread',importance: 0.031, direction: 'positive', modality: 'Technical' },
+        { feature: 'Volume Ratio',     importance: 0.024, direction: 'positive', modality: 'Price' },
+        { feature: 'VIX Level',        importance: 0.019, direction: 'negative', modality: 'Technical' },
+        { feature: 'Close / SMA20',    importance: 0.018, direction: 'positive', modality: 'Technical' },
+        { feature: 'BB Width',         importance: 0.015, direction: 'positive', modality: 'Technical' },
+        { feature: 'News Sentiment',   importance: 0.009, direction: 'positive', modality: 'Sentiment' },
     ];
 
     const data = features || defaultFeatures;
+    const maxImportance = Math.max(...data.map(f => f.importance));
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-3">
             {data.slice(0, 8).map((feature, index) => {
-                const colors = modalityColors[feature.modality] || modalityColors.Technical;
-                // Convert importance to percentage (0.18 = 18%)
-                const percentage = feature.importance * 100;
-                // Bar width equals the actual percentage displayed (18% importance = 18% bar width)
-                const barWidth = percentage;
+                const pct = (feature.importance / maxImportance) * 100;
+                const accent = modalityAccent[feature.modality] || 'var(--color-primary)';
+                const badge = modalityBadge[feature.modality] || modalityBadge.Technical;
+                const isPos = feature.direction === 'positive';
 
                 return (
                     <div
                         key={feature.feature}
-                        className="p-4 bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 shadow-sm hover:shadow-md transition-shadow animate-slide-up"
-                        style={{ animationDelay: `${index * 50}ms` }}
+                        className="flex items-center gap-3 animate-fade-up"
+                        style={{ animationDelay: `${index * 40}ms` }}
                     >
-                        {/* Feature Name */}
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {/* Rank */}
+                        <span
+                            className="w-5 text-xs font-bold text-center flex-shrink-0"
+                            style={{ color: 'var(--text-disabled)' }}
+                        >
+                            {index + 1}
+                        </span>
+
+                        {/* Feature name */}
+                        <div className="w-36 flex-shrink-0">
+                            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                                 {feature.feature}
                             </span>
-                            <InfoTooltip
-                                title={feature.feature}
-                                content={getFeatureDescription(feature.feature)}
-                            />
                         </div>
 
-                        {/* Progress Bar - width matches displayed percentage */}
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="flex-1">
-                                <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full transition-all duration-700 ease-out ${colors.bar}`}
-                                        style={{ width: `${barWidth}%` }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Direction indicator */}
-                            <span
-                                className={`text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full ${feature.direction === 'positive'
-                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400'
-                                        : 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400'
-                                    }`}
+                        {/* SHAP bar */}
+                        <div className="flex-1 relative">
+                            <div
+                                className="h-2 rounded-full overflow-hidden"
+                                style={{ background: 'var(--surface-highest)' }}
                             >
-                                {feature.direction === 'positive' ? '↑' : '↓'}
-                            </span>
+                                <div
+                                    className="h-full rounded-full transition-all duration-700 ease-out"
+                                    style={{
+                                        width: `${pct}%`,
+                                        background: isPos
+                                            ? `linear-gradient(90deg, rgba(78,222,163,0.35), var(--color-emerald))`
+                                            : `linear-gradient(90deg, rgba(255,178,183,0.35), var(--color-rose))`,
+                                    }}
+                                />
+                            </div>
                         </div>
 
-                        {/* Modality tag and importance */}
-                        <div className="flex items-center justify-between">
-                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${colors.bg} ${colors.text}`}>
-                                {feature.modality}
-                            </span>
-                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                {percentage.toFixed(0)}%
-                            </span>
-                        </div>
+                        {/* SHAP value */}
+                        <span
+                            className="w-14 text-right text-xs font-bold flex-shrink-0 tabular-nums"
+                            style={{ color: isPos ? 'var(--color-emerald)' : 'var(--color-rose)' }}
+                        >
+                            {isPos ? '+' : '-'}{feature.importance.toFixed(3)}
+                        </span>
+
+                        {/* Direction arrow */}
+                        <span
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                            style={{
+                                background: isPos ? 'rgba(78,222,163,0.15)' : 'rgba(255,178,183,0.15)',
+                                color: isPos ? 'var(--color-emerald)' : 'var(--color-rose)',
+                            }}
+                        >
+                            {isPos ? '↑' : '↓'}
+                        </span>
+
+                        {/* Modality badge */}
+                        <span
+                            className="px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0"
+                            style={{ background: badge.bg, color: badge.color }}
+                        >
+                            {feature.modality}
+                        </span>
+
+                        <InfoTooltip
+                            title={feature.feature}
+                            content={getFeatureDescription(feature.feature)}
+                        />
                     </div>
                 );
             })}
@@ -111,16 +127,15 @@ export function TopFeatures({ features }: TopFeaturesProps) {
 }
 
 function getFeatureDescription(feature: string): string {
-    const descriptions: Record<string, string> = {
-        RSI_14: 'Relative Strength Index (14-period) measures momentum. Above 70 = overbought, below 30 = oversold.',
-        'News Sentiment': 'Aggregated sentiment from financial news articles about NIFTY 50 and Indian markets.',
-        'EMA_20 Trend': '20-day Exponential Moving Average trend direction indicates short-term momentum.',
-        'MACD Histogram': 'Moving Average Convergence Divergence histogram shows trend strength and potential reversals.',
-        'Price Momentum': 'Rate of price change over recent trading sessions.',
-        'Volume Surge': 'Unusual increase in trading volume compared to average.',
-        'ATR Volatility': 'Average True Range measures market volatility over 14 periods.',
-        'Reddit Sentiment': 'Sentiment from r/IndiaInvestments and r/IndianStreetBets communities.',
+    const desc: Record<string, string> = {
+        'RSI (14)':          'Relative Strength Index — measures momentum. Above 70 = overbought, below 30 = oversold.',
+        'MACD Signal':       'Moving Average Convergence Divergence signal line — shows trend direction strength.',
+        'GIFT NIFTY Spread': 'Spread between GIFT Nifty futures and NIFTY 50 spot — a leading pre-market indicator.',
+        'Volume Ratio':      'Current volume vs 20-day average — spikes indicate institutional activity.',
+        'VIX Level':         'India VIX volatility index — higher = more uncertainty / market fear.',
+        'Close / SMA20':     'Current close relative to 20-day simple moving average — position in trend.',
+        'BB Width':          'Bollinger Band width — narrow bands often precede large moves.',
+        'News Sentiment':    'Aggregated sentiment from financial news targeting NIFTY 50 and Indian markets.',
     };
-
-    return descriptions[feature] || 'Feature importance in the prediction model.';
+    return desc[feature] || 'Feature importance in the ACMI++ prediction model.';
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Shield, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Shield, Target, Sparkles } from 'lucide-react';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import { getPredictionTargetDate } from '@/lib/tradingDays';
 import {
@@ -23,58 +23,59 @@ interface Prediction {
     quantile_5?: number;
     quantile_95?: number;
     target_date?: string;
-    trend?: string;   // Bullish / Bearish / Neutral
-    signal?: string;  // BUY / HOLD / SELL
+    trend?: string;
+    signal?: string;
 }
 
 interface PredictionCardProps {
     prediction?: Prediction;
     isLoading?: boolean;
-    currentPrice?: number;  // Add current market price to compare
+    currentPrice?: number;
 }
 
 export function PredictionCard({ prediction, isLoading, currentPrice }: PredictionCardProps) {
     if (isLoading) {
         return (
-            <div className="card p-6">
-                <div className="skeleton h-6 w-32 mb-4" />
-                <div className="skeleton h-10 w-40 mb-2" />
-                <div className="skeleton h-4 w-24" />
+            <div className="card-ai p-6">
+                <div className="skeleton h-5 w-28 mb-5 rounded" />
+                <div className="skeleton h-12 w-40 mb-3 rounded" />
+                <div className="skeleton h-4 w-24 mb-6 rounded" />
+                <div className="skeleton h-8 w-full rounded" />
             </div>
         );
     }
 
-    // Handle pending state - prediction not yet generated
     if (!prediction || (prediction as any).is_pending || (prediction as any).status === 'pending') {
         return (
-            <div className="card p-6">
+            <div className="card-ai p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-surface-900 dark:text-white">
-                        AI Prediction
-                    </h3>
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
+                        <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>AI Prediction</h3>
+                    </div>
                     <InfoTooltip
                         title="AI Prediction"
-                        content="Our multimodal deep learning model analyzes price history, technical indicators, and market sentiment to predict the next trading day's opening price."
+                        content="Our multimodal ACMI++ model analyzes price history, technical indicators, and market sentiment to predict the next trading day's opening price."
                     />
                 </div>
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4" />
-                    <p className="text-surface-600 dark:text-surface-400 font-medium">
+                    <div
+                        className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin mb-4"
+                        style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}
+                    />
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                         Generating prediction...
                     </p>
-                    <p className="text-sm text-surface-500 mt-2">
-                        The model is analyzing latest market data
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        ACMI++ is analyzing market data
                     </p>
                 </div>
             </div>
         );
     }
 
-    // --- PROBLEM 1 FIX: Calculate next valid NSE trading day ---
     const targetDateInfo = getPredictionTargetDate();
 
-    // --- PROBLEM 2 FIX: Normalize confidence metrics ---
-    // Use confidence_score first, fall back to direction_probability, then confidence_level
     const rawConfidenceScore = prediction?.confidence_score
         ?? prediction?.direction_probability
         ?? undefined;
@@ -84,156 +85,194 @@ export function PredictionCard({ prediction, isLoading, currentPrice }: Predicti
         prediction?.confidence_level
     );
 
-    // --- PROBLEM 2 FIX: Calculate prediction range ---
-    // Use quantiles if available, otherwise calculate from volatility
     let predictionRange: PredictionRange;
 
     if (prediction?.quantile_5 && prediction?.quantile_95 &&
         prediction.quantile_5 > 0 && prediction.quantile_95 > 0) {
-        // Use provided quantiles
         predictionRange = {
             lower: Math.round(prediction.quantile_5),
             upper: Math.round(prediction.quantile_95),
             isValid: true
         };
     } else {
-        // Calculate from volatility or uncertainty
         const volatility = prediction?.volatility_prediction
             ?? prediction?.uncertainty_score
             ?? undefined;
-
-        predictionRange = calculatePredictionRange(
-            prediction?.predicted_open,
-            volatility
-        );
+        predictionRange = calculatePredictionRange(prediction?.predicted_open, volatility);
     }
 
-    // --- FIX: Determine direction by comparing predicted_open to current price ---
-    // This is more intuitive - if predicted price is lower than current, it's bearish
     const predictedOpen = prediction?.predicted_open ?? 0;
-    const refPrice = currentPrice ?? predictedOpen; // Use current price if available
-
-    // Calculate actual change from current price (not model's predicted change)
+    const refPrice = currentPrice ?? predictedOpen;
     const actualChangePct = refPrice > 0
         ? ((predictedOpen - refPrice) / refPrice) * 100
         : (prediction?.predicted_change_pct ?? 0);
-
-    // Direction based on actual change from current price
     const isUp = actualChangePct >= 0;
-    const colors = getConfidenceColors(confidenceMetrics.level);
 
     return (
-        <div className="card p-6 card-hover">
+        <div className="card-ai p-6 card-hover animate-fade-up">
+            {/* Header */}
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-surface-900 dark:text-white">
-                    AI Prediction
-                </h3>
+                <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
+                    <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        AI Prediction
+                    </h3>
+                </div>
                 <InfoTooltip
                     title="AI Prediction"
-                    content="Our multimodal deep learning model analyzes price history, technical indicators, and market sentiment to predict the next trading day's opening price."
+                    content="Our multimodal ACMI++ model analyzes price history, technical indicators, and market sentiment to predict the next trading day's opening price."
                 />
             </div>
 
-            {/* Predicted Value - Updated label to show next trading day */}
-            <div className="mb-4">
-                <span className="text-sm text-surface-500">
-                    {targetDateInfo.daysAway === 1 ? "Tomorrow's Open" : `${targetDateInfo.formatted} Open`}
-                </span>
-                <div className="text-3xl font-bold text-surface-900 dark:text-white">
-                    ₹{prediction?.predicted_open?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '—'}
-                </div>
+            {/* Target label */}
+            <p className="label-upper mb-1">
+                {targetDateInfo.daysAway === 1 ? "Tomorrow's Open" : `${targetDateInfo.formatted} Open`}
+            </p>
+
+            {/* Predicted price — hero number */}
+            <div className="display-hero mb-3" style={{ fontSize: '2.25rem' }}>
+                ₹{prediction?.predicted_open?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '—'}
             </div>
 
-            {/* Direction with FIXED confidence percentage - shows change from current price */}
-            <div className={`flex items-center gap-2 mb-4 ${isUp ? 'positive' : 'negative'}`}>
-                {isUp ? (
-                    <TrendingUp className="w-5 h-5" />
-                ) : (
-                    <TrendingDown className="w-5 h-5" />
-                )}
-                <span className="font-semibold text-lg">
+            {/* Direction + change % */}
+            <div
+                className="flex items-center gap-2 mb-4 py-2 px-3 rounded-lg"
+                style={{
+                    background: isUp ? 'rgba(78,222,163,0.08)' : 'rgba(255,178,183,0.08)',
+                    border: `1px solid ${isUp ? 'rgba(78,222,163,0.2)' : 'rgba(255,178,183,0.2)'}`,
+                }}
+            >
+                {isUp
+                    ? <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-emerald)' }} />
+                    : <TrendingDown className="w-4 h-4" style={{ color: 'var(--color-rose)' }} />
+                }
+                <span
+                    className="text-lg font-bold"
+                    style={{ color: isUp ? 'var(--color-emerald)' : 'var(--color-rose)' }}
+                >
                     {actualChangePct >= 0 ? '+' : ''}{actualChangePct.toFixed(2)}%
                 </span>
-                <span className="text-sm opacity-80">
-                    ({confidenceMetrics.percentage}% confidence)
+                <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>
+                    {confidenceMetrics.percentage}% confidence
                 </span>
             </div>
 
-            {/* Confidence Badge */}
-            <div className="flex items-center gap-2 mb-4">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${colors.bg} ${colors.text}`}>
-                    {confidenceMetrics.level === 'high' && <CheckCircle className="w-4 h-4 inline mr-1" />}
-                    {confidenceMetrics.level === 'low' && <AlertTriangle className="w-4 h-4 inline mr-1" />}
-                    {confidenceMetrics.level.toUpperCase()} CONFIDENCE
+            {/* Confidence + Trend + Signal badges */}
+            <div className="flex flex-wrap gap-2 mb-4">
+                <span
+                    className="badge"
+                    style={{
+                        background: confidenceMetrics.level === 'high'
+                            ? 'rgba(78,222,163,0.13)'
+                            : confidenceMetrics.level === 'low'
+                                ? 'rgba(255,178,183,0.13)'
+                                : 'rgba(251,191,36,0.13)',
+                        color: confidenceMetrics.level === 'high'
+                            ? 'var(--color-emerald)'
+                            : confidenceMetrics.level === 'low'
+                                ? 'var(--color-rose)'
+                                : 'var(--color-amber)',
+                        border: `1px solid ${confidenceMetrics.level === 'high'
+                            ? 'rgba(78,222,163,0.25)'
+                            : confidenceMetrics.level === 'low'
+                                ? 'rgba(255,178,183,0.25)'
+                                : 'rgba(251,191,36,0.25)'}`,
+                    }}
+                >
+                    {confidenceMetrics.level === 'high' && <CheckCircle className="w-3 h-3 inline mr-0.5" />}
+                    {confidenceMetrics.level === 'low' && <AlertTriangle className="w-3 h-3 inline mr-0.5" />}
+                    {confidenceMetrics.level.toUpperCase()}
                 </span>
-            </div>
 
-            {/* Trend & Signal Badges */}
-            <div className="flex items-center gap-2 mb-4">
-                {/* Trend Badge */}
                 {prediction?.trend && (
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${prediction.trend === 'Bullish'
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                            : prediction.trend === 'Bearish'
-                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'
-                                : 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400'
-                        }`}>
-                        <Target className="w-3.5 h-3.5" />
+                    <span
+                        className="badge"
+                        style={{
+                            background: prediction.trend === 'Bullish'
+                                ? 'rgba(78,222,163,0.1)' : prediction.trend === 'Bearish'
+                                    ? 'rgba(255,178,183,0.1)' : 'rgba(145,143,154,0.1)',
+                            color: prediction.trend === 'Bullish'
+                                ? 'var(--color-emerald)' : prediction.trend === 'Bearish'
+                                    ? 'var(--color-rose)' : 'var(--text-muted)',
+                            border: '1px solid rgba(145,143,154,0.2)',
+                        }}
+                    >
+                        <Target className="w-3 h-3 inline mr-0.5" />
                         {prediction.trend}
                     </span>
                 )}
 
-                {/* Signal Badge */}
                 {prediction?.signal && (
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${prediction.signal === 'BUY'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/30 dark:text-emerald-300'
-                            : prediction.signal === 'SELL'
-                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-500/30 dark:text-rose-300'
-                                : 'bg-amber-100 text-amber-800 dark:bg-amber-500/30 dark:text-amber-300'
-                        }`}>
-                        <Shield className="w-3.5 h-3.5" />
+                    <span
+                        className="badge"
+                        style={{
+                            background: prediction.signal === 'BUY'
+                                ? 'rgba(78,222,163,0.15)' : prediction.signal === 'SELL'
+                                    ? 'rgba(255,178,183,0.15)' : 'rgba(251,191,36,0.15)',
+                            color: prediction.signal === 'BUY'
+                                ? 'var(--color-emerald)' : prediction.signal === 'SELL'
+                                    ? 'var(--color-rose)' : 'var(--color-amber)',
+                            border: '1px solid rgba(145,143,154,0.18)',
+                        }}
+                    >
+                        <Shield className="w-3 h-3 inline mr-0.5" />
                         {prediction.signal}
                     </span>
                 )}
             </div>
 
-            {/* Prediction Range - FIXED with proper calculation */}
-            <div className="p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
+            {/* Prediction Range */}
+            <div
+                className="p-3 rounded-xl"
+                style={{ background: 'var(--surface-high)', border: '1px solid var(--border-ghost)' }}
+            >
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-surface-500">Prediction Range (90%)</span>
+                    <span className="label-upper">90% Prediction Range</span>
                     <InfoTooltip
                         title="Prediction Range"
-                        content="The model is 90% confident the actual price will fall within this range. Wider ranges indicate more uncertainty."
+                        content="The model is 90% confident the actual price will fall within this range."
                     />
                 </div>
 
                 {predictionRange.isValid ? (
-                    <div className="flex items-center justify-between text-sm">
-                        <span className="text-danger-500 font-medium">
-                            ₹{predictionRange.lower.toLocaleString('en-IN')}
-                        </span>
-                        <div className="flex-1 mx-3 h-2 bg-surface-200 dark:bg-surface-600 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-danger-500 via-primary-500 to-success-500 rounded-full" />
+                    <>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-medium" style={{ color: 'var(--color-rose)' }}>
+                                ₹{predictionRange.lower.toLocaleString('en-IN')}
+                            </span>
+                            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-lowest)' }}>
+                                <div
+                                    className="h-full rounded-full"
+                                    style={{ background: 'linear-gradient(90deg, var(--color-rose), var(--color-primary), var(--color-emerald))' }}
+                                />
+                            </div>
+                            <span className="text-xs font-medium" style={{ color: 'var(--color-emerald)' }}>
+                                ₹{predictionRange.upper.toLocaleString('en-IN')}
+                            </span>
                         </div>
-                        <span className="text-success-500 font-medium">
-                            ₹{predictionRange.upper.toLocaleString('en-IN')}
-                        </span>
-                    </div>
+                        <div className="text-center">
+                            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                Median: ₹{Math.round(predictedOpen).toLocaleString('en-IN')}
+                            </span>
+                        </div>
+                    </>
                 ) : (
-                    <div className="text-sm text-surface-500 italic">
-                        {predictionRange.errorMessage || 'Prediction range unavailable due to insufficient data'}
+                    <div className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+                        {predictionRange.errorMessage || 'Range unavailable'}
                     </div>
                 )}
             </div>
 
-            {/* Target Date - FIXED to show next trading day */}
-            <div className="mt-4 text-xs text-surface-500 text-center">
-                Prediction for: {targetDateInfo.formatted}
-                {targetDateInfo.daysAway > 1 && (
-                    <span className="ml-1 text-primary-500">
-                        ({targetDateInfo.daysAway} days away)
-                    </span>
-                )}
+            {/* Target date footer */}
+            <div className="mt-3 text-center">
+                <span className="label-upper">
+                    For {targetDateInfo.formatted}
+                    {targetDateInfo.daysAway > 1 && (
+                        <span className="ml-1" style={{ color: 'var(--color-primary)' }}>
+                            ({targetDateInfo.daysAway}d)
+                        </span>
+                    )}
+                </span>
             </div>
         </div>
     );

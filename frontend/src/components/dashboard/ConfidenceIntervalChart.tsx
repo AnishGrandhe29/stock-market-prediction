@@ -17,132 +17,176 @@ export function ConfidenceIntervalChart({
     quantile95,
     changePct,
 }: ConfidenceIntervalChartProps) {
-    // Use realistic defaults if data not available
     const price = currentPrice || 0;
     const predicted = predictedPrice || price;
-    const q5 = quantile5 || predicted * 0.98;
+    const q5  = quantile5  || predicted * 0.98;
     const q95 = quantile95 || predicted * 1.02;
 
     if (!price || price <= 0) {
         return (
-            <div className="card p-6">
-                <h3 className="font-semibold text-surface-900 dark:text-white mb-2">Confidence Interval</h3>
-                <p className="text-sm text-surface-500">Waiting for price data...</p>
+            <div className="card p-5">
+                <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                    Confidence Interval
+                </h3>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                    Waiting for price data...
+                </p>
             </div>
         );
     }
 
-    // Compute range for the visualization
-    const spread = q95 - q5;
-    const padding = spread * 0.3;
-    const vizMin = q5 - padding;
-    const vizMax = q95 + padding;
+    const spread   = q95 - q5;
+    const padding  = spread * 0.3;
+    const vizMin   = q5 - padding;
+    const vizMax   = q95 + padding;
     const vizRange = vizMax - vizMin;
 
-    // Positions as percentages
-    const q5Pct = ((q5 - vizMin) / vizRange) * 100;
-    const q95Pct = ((q95 - vizMin) / vizRange) * 100;
+    const q5Pct        = ((q5 - vizMin) / vizRange) * 100;
+    const q95Pct       = ((q95 - vizMin) / vizRange) * 100;
     const predictedPct = ((predicted - vizMin) / vizRange) * 100;
-    const currentPct = ((price - vizMin) / vizRange) * 100;
+    const currentPct   = ((price - vizMin) / vizRange) * 100;
 
     const isUp = (changePct ?? 0) >= 0;
 
     return (
-        <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-surface-900 dark:text-white">
-                    Prediction Confidence Interval
+        <div className="card p-5 animate-fade-up animate-fade-up-2">
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Confidence Interval
                 </h3>
                 <InfoTooltip
                     title="90% Confidence Interval"
-                    content="The shaded region shows the range within which the actual price is expected to fall with 90% probability. Narrower bands indicate higher model confidence."
+                    content="The model is 90% confident the actual NIFTY 50 opening price will land in this range. Wider bands = more uncertainty."
                 />
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 mb-4 text-xs text-surface-500">
+            <div className="flex items-center gap-4 mb-4 text-xs" style={{ color: 'var(--text-muted)' }}>
                 <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-surface-400 border-2 border-surface-600 inline-block" />
+                    <span
+                        className="w-2.5 h-2.5 rounded-full inline-block border-2"
+                        style={{ background: 'var(--surface-bright)', borderColor: 'var(--outline-color)' }}
+                    />
                     Current
                 </span>
                 <span className="flex items-center gap-1">
-                    <span className={`w-3 h-3 rounded-full inline-block ${isUp ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                    <span
+                        className="w-2.5 h-2.5 rounded-full inline-block"
+                        style={{ background: isUp ? 'var(--color-emerald)' : 'var(--color-rose)' }}
+                    />
                     Predicted
                 </span>
                 <span className="flex items-center gap-1">
-                    <span className="w-6 h-3 rounded bg-primary-200 dark:bg-primary-800 inline-block" />
+                    <span
+                        className="w-5 h-2.5 rounded inline-block"
+                        style={{ background: 'rgba(192,193,255,0.20)' }}
+                    />
                     90% Band
                 </span>
             </div>
 
             {/* Visual bar */}
-            <div className="relative h-16 mb-2">
-                {/* Background track */}
-                <div className="absolute top-6 left-0 right-0 h-4 bg-surface-100 dark:bg-surface-700 rounded-full" />
+            <div className="relative h-14 mb-2">
+                {/* Track */}
+                <div
+                    className="absolute top-5 left-0 right-0 h-4 rounded-full"
+                    style={{ background: 'var(--surface-highest)' }}
+                />
 
                 {/* Confidence band */}
                 <div
-                    className="absolute top-4 h-8 bg-gradient-to-r from-primary-200 via-primary-300 to-primary-200 dark:from-primary-800 dark:via-primary-700 dark:to-primary-800 rounded-lg border border-primary-300 dark:border-primary-600 opacity-70"
-                    style={{ left: `${q5Pct}%`, width: `${q95Pct - q5Pct}%` }}
+                    className="absolute top-3 h-8 rounded-lg"
+                    style={{
+                        left: `${q5Pct}%`,
+                        width: `${q95Pct - q5Pct}%`,
+                        background: 'rgba(192,193,255,0.14)',
+                        border: '1px solid rgba(192,193,255,0.22)',
+                    }}
                 />
 
                 {/* Current price marker */}
                 <div
-                    className="absolute top-3 flex flex-col items-center"
+                    className="absolute top-2 flex flex-col items-center"
                     style={{ left: `${currentPct}%`, transform: 'translateX(-50%)' }}
                 >
-                    <div className="w-0.5 h-10 bg-surface-400 dark:bg-surface-500" />
-                    <div className="w-3 h-3 rounded-full bg-surface-400 border-2 border-surface-600 dark:border-surface-300 -mt-7" />
+                    <div
+                        className="w-px h-10"
+                        style={{ background: 'var(--outline-color)' }}
+                    />
+                    <div
+                        className="w-3 h-3 rounded-full border-2 -mt-7"
+                        style={{
+                            background: 'var(--surface-bright)',
+                            borderColor: 'var(--outline-color)',
+                        }}
+                    />
                 </div>
 
                 {/* Predicted price marker */}
                 <div
-                    className="absolute top-3 flex flex-col items-center"
+                    className="absolute top-2 flex flex-col items-center"
                     style={{ left: `${predictedPct}%`, transform: 'translateX(-50%)' }}
                 >
-                    <div className={`w-0.5 h-10 ${isUp ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                    <div className={`w-4 h-4 rounded-full -mt-8 border-2 border-white dark:border-surface-800 shadow-lg ${isUp ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                    <div
+                        className="w-px h-10"
+                        style={{ background: isUp ? 'var(--color-emerald)' : 'var(--color-rose)' }}
+                    />
+                    <div
+                        className="w-3.5 h-3.5 rounded-full -mt-8 border-2"
+                        style={{
+                            background: isUp ? 'var(--color-emerald)' : 'var(--color-rose)',
+                            borderColor: 'var(--surface-card)',
+                            boxShadow: isUp
+                                ? '0 0 8px rgba(78,222,163,0.5)'
+                                : '0 0 8px rgba(255,178,183,0.5)',
+                        }}
+                    />
                 </div>
             </div>
 
-            {/* Labels */}
-            <div className="relative h-8 text-xs">
+            {/* Price labels */}
+            <div className="relative h-5 text-xs">
                 <span
-                    className="absolute text-surface-500 font-medium"
-                    style={{ left: `${q5Pct}%`, transform: 'translateX(-50%)' }}
+                    className="absolute font-medium tabular-nums"
+                    style={{ left: `${q5Pct}%`, transform: 'translateX(-50%)', color: 'var(--text-muted)' }}
                 >
                     ₹{Math.round(q5).toLocaleString('en-IN')}
                 </span>
                 <span
-                    className={`absolute font-bold ${isUp ? 'text-emerald-600' : 'text-rose-600'}`}
-                    style={{ left: `${predictedPct}%`, transform: 'translateX(-50%)' }}
+                    className="absolute font-bold tabular-nums"
+                    style={{
+                        left: `${predictedPct}%`,
+                        transform: 'translateX(-50%)',
+                        color: isUp ? 'var(--color-emerald)' : 'var(--color-rose)',
+                    }}
                 >
                     ₹{Math.round(predicted).toLocaleString('en-IN')}
                 </span>
                 <span
-                    className="absolute text-surface-500 font-medium"
-                    style={{ left: `${q95Pct}%`, transform: 'translateX(-50%)' }}
+                    className="absolute font-medium tabular-nums"
+                    style={{ left: `${q95Pct}%`, transform: 'translateX(-50%)', color: 'var(--text-muted)' }}
                 >
                     ₹{Math.round(q95).toLocaleString('en-IN')}
                 </span>
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
-                <div className="text-center">
-                    <p className="text-xs text-surface-500">Lower Bound</p>
-                    <p className="text-sm font-semibold text-rose-600">₹{Math.round(q5).toLocaleString('en-IN')}</p>
-                </div>
-                <div className="text-center">
-                    <p className="text-xs text-surface-500">Predicted</p>
-                    <p className={`text-sm font-bold ${isUp ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        ₹{Math.round(predicted).toLocaleString('en-IN')}
-                    </p>
-                </div>
-                <div className="text-center">
-                    <p className="text-xs text-surface-500">Upper Bound</p>
-                    <p className="text-sm font-semibold text-emerald-600">₹{Math.round(q95).toLocaleString('en-IN')}</p>
-                </div>
+            <div
+                className="grid grid-cols-3 gap-2 mt-4 pt-3"
+                style={{ borderTop: '1px solid var(--border-ghost)' }}
+            >
+                {[
+                    { label: 'P5',      val: Math.round(q5),        color: 'var(--color-rose)' },
+                    { label: 'Median',  val: Math.round(predicted),  color: isUp ? 'var(--color-emerald)' : 'var(--color-rose)' },
+                    { label: 'P95',     val: Math.round(q95),        color: 'var(--color-emerald)' },
+                ].map(({ label, val, color }) => (
+                    <div key={label} className="text-center">
+                        <p className="label-upper mb-0.5">{label}</p>
+                        <p className="text-sm font-bold tabular-nums" style={{ color }}>
+                            ₹{val.toLocaleString('en-IN')}
+                        </p>
+                    </div>
+                ))}
             </div>
         </div>
     );

@@ -3,6 +3,7 @@ from app.ml.models.tcn import TCNEncoder, TemporalBlock
 from app.ml.models.sentiment import SentimentEncoder, SimpleSentimentEncoder
 from app.ml.models.technical import TechnicalEncoder, TECHNICAL_FEATURES
 from app.ml.models.fusion import AdaptiveFusionGate, PredictionHead, NIFTY50Predictor
+from app.ml.models.overnight_encoder import OvernightEncoder
 
 __all__ = [
     "TCNEncoder",
@@ -14,4 +15,5 @@ __all__ = [
     "AdaptiveFusionGate",
     "PredictionHead",
     "NIFTY50Predictor",
+    "OvernightEncoder",
 ]
