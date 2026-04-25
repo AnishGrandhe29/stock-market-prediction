@@ -243,12 +243,12 @@ export default function Dashboard() {
                                 ? price.volume >= 1e9 ? (price.volume / 1e9).toFixed(1) + 'B'
                                 : price.volume >= 1e6 ? (price.volume / 1e6).toFixed(1) + 'M'
                                     : price.volume.toLocaleString('en-IN')
-                                : 'N/A'}
+                                : (isMarketOpen === false ? 'Market Closed' : 'N/A')}
                         </span>
                     </div>
                     {(!price?.volume || price.volume === 0) && (
                         <p className="text-xs mt-1" style={{ color: 'var(--text-disabled)' }}>
-                            Available during market hours
+                            {isMarketOpen === false ? 'Volume data for last session' : 'Live volume currently unavailable'}
                         </p>
                     )}
                 </StatCard>

@@ -62,8 +62,8 @@ function NLPSummary({
     const isUp = changePct >= 0;
     return (
         <div className={`relative p-4 rounded-xl border-l-4 ${isUp
-            ? 'border-success-400 bg-success-50 dark:bg-success-900/15'
-            : 'border-danger-400 bg-danger-50 dark:bg-danger-900/15'
+            ? 'border-success-500 bg-success-50 dark:bg-success-900/20'
+            : 'border-danger-500 bg-danger-50 dark:bg-danger-900/20'
             }`}>
             <div className="flex items-start gap-3">
                 <div className={`p-2 rounded-lg flex-shrink-0 ${isUp
@@ -72,7 +72,7 @@ function NLPSummary({
                     }`}>
                     <Lightbulb className={`w-4 h-4 ${isUp ? 'text-success-600' : 'text-danger-600'}`} />
                 </div>
-                <p className="text-sm leading-relaxed text-surface-800 dark:text-surface-200 italic">
+                <p className="text-sm leading-relaxed text-surface-700 dark:text-surface-100 italic">
                     {text}
                 </p>
             </div>
@@ -131,7 +131,7 @@ function ModalityMiniBar({ weights }: { weights: Record<string, number> | null |
                             </span>
                             <span className={`text-xs font-bold ${meta.textColor}`}>{pct}%</span>
                         </div>
-                        <div className={`h-2 rounded-full ${meta.bgColor} overflow-hidden`}>
+                        <div className={`h-2 rounded-full ${meta.bgColor} overflow-hidden bg-surface-200 dark:bg-surface-800`}>
                             <div
                                 className={`h-full rounded-full ${meta.color} transition-all duration-700 ease-out`}
                                 style={{ width: `${pct}%` }}
@@ -247,9 +247,9 @@ function FeatureBars({
                             }
                             <span className="text-xs text-surface-600 dark:text-surface-400 truncate">{feat.name}</span>
                         </div>
-                        <div className="flex-1 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-surface-200 dark:bg-surface-800 rounded-full overflow-hidden">
                             <div
-                                className={`h-full rounded-full transition-all duration-700 ease-out ${isFeatureUp ? 'bg-success-400' : 'bg-danger-400'}`}
+                                className={`h-full rounded-full transition-all duration-700 ease-out ${isFeatureUp ? 'bg-success-500' : 'bg-danger-500'}`}
                                 style={{ width: `${barPct}%` }}
                             />
                         </div>

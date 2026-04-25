@@ -63,11 +63,17 @@ export default function PredictionsPage() {
     });
     const xaiData = xaiResponse?.data ?? null;
 
-    // Calculate actual direction by comparing predicted_open to current price
+    // ── Derive change % consistently with Dashboard logic
+    const prevClose = prediction?.input_features?.prev_close as number | undefined
+        ?? priceData?.data?.previous_close
+        ?? priceData?.data?.price;
+    
     const predictedOpen = prediction?.predicted_open ?? 0;
-    const actualChangePct = currentPrice && currentPrice > 0
-        ? ((predictedOpen - currentPrice) / currentPrice) * 100
-        : (prediction?.predicted_change_pct ?? 0);
+    const actualChangePct = prediction?.predicted_change_pct ?? (
+        (predictedOpen && prevClose) 
+            ? ((predictedOpen - prevClose) / prevClose) * 100 
+            : 0
+    );
     const isActuallyUp = actualChangePct >= 0;
 
     // Default history data for display

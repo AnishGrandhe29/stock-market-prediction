@@ -89,8 +89,7 @@ export function ConfidenceIntervalChart({
             <div className="relative h-14 mb-2">
                 {/* Track */}
                 <div
-                    className="absolute top-5 left-0 right-0 h-4 rounded-full"
-                    style={{ background: 'var(--surface-highest)' }}
+                    className="absolute top-5 left-0 right-0 h-4 rounded-full bg-surface-200 dark:bg-surface-800"
                 />
 
                 {/* Confidence band */}
@@ -99,8 +98,8 @@ export function ConfidenceIntervalChart({
                     style={{
                         left: `${q5Pct}%`,
                         width: `${q95Pct - q5Pct}%`,
-                        background: 'rgba(192,193,255,0.14)',
-                        border: '1px solid rgba(192,193,255,0.22)',
+                        background: 'rgba(99, 102, 241, 0.25)',
+                        border: '1px solid rgba(99, 102, 241, 0.4)',
                     }}
                 />
 

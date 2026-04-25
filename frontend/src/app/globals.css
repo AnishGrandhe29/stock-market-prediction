@@ -55,8 +55,37 @@
   --background-rgb: 19, 19, 22;
 }
 
-/* ── Force Void Dark Mode ── */
-html { color-scheme: dark; }
+/* ── Light Mode Overrides ── */
+:root:not(.dark) {
+  --surface-base:    #f8f9fa;
+  --surface-lowest:  #ffffff;
+  --surface-low:     #f1f3f5;
+  --surface-card:    #ffffff;
+  --surface-high:    #e9ecef;
+  --surface-highest: #dee2e6;
+  --surface-bright:  #ced4da;
+
+  --color-primary:        #6366f1;
+  --color-primary-dim:    #4f46e5;
+  --color-primary-container: #818cf8;
+  --color-on-primary:     #ffffff;
+
+  --text-primary:   #1a1a1e;
+  --text-secondary: #4a4a4e;
+  --text-muted:     #6a6a70;
+  --text-disabled:  #a1a1a6;
+
+  --border-ghost:   rgba(0,0,0,0.08);
+  --border-faint:   rgba(0,0,0,0.04);
+  --outline-color:  #ced4da;
+
+  --foreground-rgb: 26, 26, 30;
+  --background-rgb: 248, 249, 250;
+}
+
+/* ── Theme Support ── */
+html { color-scheme: light dark; }
+html.dark { color-scheme: dark; }
 
 body {
   color: rgb(var(--foreground-rgb));
@@ -64,6 +93,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ══════════════════════════════════════

@@ -1,102 +1,104 @@
-# NIFTY 50 Index Prediction System
+# NIFTY 50 ACMI++ Prediction System
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)](https://pytorch.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-A production-ready multimodal deep learning platform for predicting NIFTY 50 Index movements. This project leverages technical indicators, news sentiment, and historical price action to generate highly transparent predictions using Explainable AI (XAI).
-
-## Features
-
-- 📊 **Real-Time Financial Dashboard**: View live NIFTY 50 charts and metrics.
-- 🤖 **Multimodal Deep Learning Model**: Uses PyTorch to combine tabular data with sequence modeling.
-- 🔍 **Explainable AI (XAI)**: Understand the *why* behind predictions through feature importance (SHAP values) and modality weights.
-- 👤 **User Management System**: Track your own Watchlist, secure User Notes, and define custom Alerts.
-- 🔐 **Secure Authentication**: Supports JWT-based email authentication and Google OAuth.
+A state-of-the-art, production-ready multimodal deep learning platform powered by the **ACMI++** (Adaptive Contextual Market Intelligence) architecture. This system predicts NIFTY 50 Index movements by fusing technical indicators, news sentiment, structural market data, and overnight signals from GIFT NIFTY.
 
 ---
 
-## Target Architecture
+## 🚀 Key Features (v2.0 ACMI++)
 
-The application is structured into decoupled frontend and backend services suitable for microservices deployment:
+- 🧠 **ACMI++ Architecture**: A regime-conditioned model leveraging Temporal (TCN/TF), Technical, and Structural (GNN) embeddings for superior accuracy.
+- 🕒 **Multi-Horizon Forecasting**: Simultaneous predictions for **1-day, 5-day, 20-day, and 60-day** intervals with 90% conformal confidence bands.
+- 🌅 **GIFT NIFTY Integration**: Incorporates real-time overnight signals to predict opening gaps and early morning price action.
+- 📊 **Market Regime Classification**: Automatically identifies market states: `Bullish`, `Bearish`, `Sideways`, `High Volatility`, or `Unknown`.
+- 🛡️ **Risk & Volatility Insights**: Integrated forecasts for **Crash Probability** and **Expected Volatility** to aid in capital preservation.
+- 🔍 **Intrinsic Explainability**: Dynamic fusion weights provide real-time attribution, showing exactly how much the model relied on each data modality.
+- 📈 **Real-Time Dashboard**: High-fidelity visualization of live NIFTY 50 metrics, progress bars for confidence, and interactive charts.
+
+---
+
+## 🏗️ System Architecture
+
+The application uses a decoupled microservices-ready architecture:
 
 ```mermaid
 graph TD;
     Client[Next.js Frontend] -->|REST / WebSocket| API[FastAPI Backend]
-    API -->|Reads/Writes| DB[(PostgreSQL)]
-    API -->|Session/Cache| Redis[(Redis)]
-    API -->|Inference| Model[PyTorch Prediction Engine]
-    Model -->|XAI Insights| SHAP[Feature Importance]
+    API -->|Data Management| DB[(SQLite/PostgreSQL)]
+    API -->|Fast Inference Cache| Redis[(Redis)]
+    
+    subgraph Engine [ACMI++ Prediction Engine]
+        direction TB
+        TCN[Temporal Encoder]
+        GNN[Structural GNN]
+        Fuse[Adaptive Fusion Gate]
+        Regime[Regime Classifier]
+    end
+    
+    API -->|Request Inference| Engine
+    Engine -->|Output| Res[Multi-Horizon Preds + Risk Metrics]
 ```
 
-## Quick Start
+---
+
+## 📂 Directory Structure
+
+```
+├── backend/            # FastAPI application logic
+│   ├── app/            # System Core, APIs, DB Models, Schemas
+│   │   ├── ml/         # ACMI++ Model Architectures (TCN, GNN, Fusion)
+│   │   └── services/   # Inference Wrappers & Business Logic
+│   └── tests/          # E2E & Unit tests (Allure integrated)
+├── frontend/           # Next.js 14+ UI (App Router)
+│   ├── src/app/        # Dashboard, Live Chart, Prediction views
+│   ├── src/components/ # Premium UI Components (Shadcn/UI inspired)
+│   └── src/lib/        # API Client & State Management (Zustand)
+├── models/             # Trained Weights (.pt) & Feature Scalers
+├── training/           # ACMI++ Research & Training Pipelines (Jupyter)
+└── Documentation/      # System Design & Research Papers
+```
+
+---
+
+## 🛠️ Quick Start
 
 ### 1. Prerequisites
+- **Python 3.11+**
+- **Node.js 18+**
+- **SQLite** (or PostgreSQL for production)
+- **Redis** (Highly recommended for inference caching)
 
-Ensure you have the following installed:
-- Python 3.11+
-- Node.js 18+
-- PostgreSQL 15+
-- Redis (Optional but recommended for session cache)
-
-### 2. Backend Setup
+### 2. Installation & Setup
+The project includes a comprehensive setup script for Windows:
 ```bash
 # Clone the repository
 git clone <your-repo-url>
-cd stock-market-prediction/backend
+cd stock-market-prediction
 
-# Install dependencies
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# Duplicate environment file
-cp .env.example .env
-# Edit the .env with your local credentials
+# Run the automated setup
+setup.bat
 ```
 
-### 3. Frontend Setup
-```bash
-cd ../frontend
-
-# Install dependencies
-npm install
-
-# Setup environment config (if applicable)
-# .env.local -> NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-### 4. Running the Application
-
-You can start both services using the provided bat script (Windows):
+### 3. Running the System
+Start both the backend and frontend services simultaneously:
 ```bash
 run_all.bat
 ```
 
-Or manually:
-- Backend: `uvicorn app.main:app --reload`
-- Frontend: `npm run dev`
+---
+
+## 🧪 Testing & Quality Assurance
+The system includes a robust E2E testing suite with **Allure Reporting**:
+- **Chatbot Verification**: Automated tests for bot interaction and response accuracy.
+- **API Stability**: Validation of inference latency and schema integrity.
+- **UI Consistency**: Visual regression testing for the NIFTY 50 dashboard.
 
 ---
 
-## Directory Structure
-```
-├── backend/            # FastAPI application logic
-│   ├── app/            # System Core, APIs, DB Models, Schemas
-│   └── tests/          # Unit tests
-├── frontend/           # Next.js UI
-│   ├── src/app/        # App router and page views
-│   ├── src/components/ # Reusable UI components
-│   └── src/lib/        # API client layer
-├── training/           # Research Jupyter Notebooks for model training
-├── models/             # Exported PyTorch (.pt) weights and scalers
-└── docs/               # System architecture documentation
-```
+## 🛡️ License
+Distributed under the **MIT License**. See `LICENSE` for more information.
 
-## Production Considerations
-When moving this system to production, consider the following:
-- **Environment Configuration**: Never use the default fallback secrets located in `app/config.py`. Expose them purely via your CI/CD runner or Docker secrets.
-- **Background Tasks**: Replace FastAPI Background Tasks with Celery/Redis for intensive model re-training tasks.
-
-## License
-MIT License.

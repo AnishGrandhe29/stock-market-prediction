@@ -35,9 +35,8 @@ export function Navbar() {
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-            setIsDark(true);
+            const isDarkTheme = document.documentElement.classList.contains('dark');
+            setIsDark(isDarkTheme);
         }
     }, []);
 
